@@ -1,4 +1,4 @@
-const sheetURL = "https://script.google.com/macros/s/AKfycbx3H3tAXcTjqbD__9H3Z5GmlI_9pz3kf17sDTtan9f3cEiwg8R0zV2Qh2Pl9oYfeiU/exec";
+const sheetURL = "https://script.google.com/macros/s/AKfycbxPxLmOFqxkwyl44Bg0PgRhSWcciYlpPCbrTvZXpcpNWzqh5Ly8A5myzzo3fLsmlnc/exec";
 let logs = [], habitSet = new Set(), viceSet = new Set();
 
 // Process sheet rows
@@ -29,20 +29,27 @@ function render() {
   });
 
   const ctx = document.getElementById("trendChart").getContext("2d");
-  const labels = logs.map(x=>x.date);
-  ["sleep","mood","focus","energy"].forEach((key,i) => {
-    if (window.chartInstance) window.chartInstance.destroy();
-    window.chartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: { labels, datasets: [{
-        label: key.charAt(0).toUpperCase()+key.slice(1),
-        data: logs.map(x=>x[key]),
-        backgroundColor: ["rgba(0,255,0,0.4)", "rgba(255,255,0,0.4)", "rgba(255,0,255,0.4)", "rgba(255,0,0,0.4)"][i]
-      }]},
-      options: { scales:{ x:{ ticks:{ color:"#eee" } }, y:{ beginAtZero:true, max:12, ticks:{color:"#eee"} } }, plugins:{legend:{labels:{color:"#eee"}} } }
-    });
-  });
-}
+if (window.chartInstance) window.chartInstance.destroy();
+window.chartInstance = new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      { label: 'Sleep', data: logs.map(x=>x.sleep), backgroundColor: 'rgba(0,255,0,0.4)' },
+      { label: 'Mood', data: logs.map(x=>x.mood), backgroundColor: 'rgba(255,255,0,0.4)' },
+      { label: 'Focus', data: logs.map(x=>x.focus), backgroundColor: 'rgba(255,0,255,0.4)' },
+      { label: 'Energy', data: logs.map(x=>x.energy), backgroundColor: 'rgba(255,0,0,0.4)' },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { labels: { color: "#eee" } } },
+    scales: {
+      x: { ticks: { color: "#eee" } },
+      y: { beginAtZero: true, max: 12, ticks: { color: "#eee" } }
+    }
+  }
+});
 
 // Fetch initial data
 fetch(sheetURL)
