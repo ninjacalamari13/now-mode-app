@@ -1,7 +1,7 @@
 const sheetURL = "https://script.google.com/macros/s/AKfycbyrXlbeWtMDNIgbw3JbiTp07VkZ7jIqsey-WNTGgRwRvHIGsE8i4lQ2oyJR5SoyLsk/exec";
 let logs = [], habitSet = new Set(), viceSet = new Set();
 
-// Parse rows from Google Sheet
+// Process sheet rows
 function parseSheet(rows) {
   return rows.map(r => {
     let [date, sleep, mood, focus, energy, habits, vices, notes] = r;
@@ -13,7 +13,7 @@ function parseSheet(rows) {
   });
 }
 
-// Render graph and checkboxes
+// Render chart and checkboxes
 function render() {
   if (!logs.length) return;
 
@@ -55,14 +55,27 @@ function render() {
         legend: { labels: { color: "#eee" } }
       },
       scales: {
-        x: { ticks: { color: "#eee" } },
-        y: { beginAtZero: true, max: 12, ticks: { color: "#eee" } }
+        x: {
+          ticks: {
+            color: "#eee",
+            maxTicksLimit: 7  // Fewer labels
+          },
+          barPercentage: 1.0,
+          categoryPercentage: 0.8,
+          grid: { color: "#333" }
+        },
+        y: {
+          beginAtZero: true,
+          max: 12,
+          ticks: { color: "#eee" },
+          grid: { color: "#333" }
+        }
       }
     }
   });
 }
 
-// Fetch initial data from Google Sheet
+// Fetch initial data
 fetch(sheetURL)
   .then(r => r.json())
   .then(data => {
@@ -71,19 +84,19 @@ fetch(sheetURL)
   })
   .catch(e => console.error("Fetch failed:", e));
 
-// Submit new log entry
+// Form submission
 document.getElementById("logForm").addEventListener("submit", e => {
   e.preventDefault();
 
   const entry = {
     date: new Date().toLocaleDateString(),
-    sleep: +sleep.value,
-    mood: +mood.value,
-    focus: +focus.value,
-    energy: +energy.value,
+    sleep: +document.getElementById("sleep").value,
+    mood: +document.getElementById("mood").value,
+    focus: +document.getElementById("focus").value,
+    energy: +document.getElementById("energy").value,
     habits: [...document.querySelectorAll('input[name="habit"]:checked')].map(x => x.value),
     vices: [...document.querySelectorAll('input[name="vice"]:checked')].map(x => x.value),
-    notes: notes.value
+    notes: document.getElementById("notes").value
   };
 
   if (isNaN(entry.sleep) || isNaN(entry.mood) || isNaN(entry.focus) || isNaN(entry.energy)) {
