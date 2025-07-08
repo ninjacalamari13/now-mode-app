@@ -1,137 +1,73 @@
-// Replaces localStorage with Google Sheets read via doGet
+const sheetURL = "https://script.google.com/macros/s/AKfycbx3H3tAXcTjqbD__9H3Z5GmlI_9pz3kf17sDTtan9f3cEiwg8R0zV2Qh2Pl9oYfeiU/exec";
+let logs = [], habitSet = new Set(), viceSet = new Set();
 
-const sheetReadUrl = "https://script.google.com/macros/s/AKfycbx3H3tAXcTjqbD__9H3Z5GmlI_9pz3kf17sDTtan9f3cEiwg8R0zV2Qh2Pl9oYfeiU/exec";
-
-let logs = [];
-const habitSet = new Set();
-const viceSet = new Set();
-
-function parseSheetRows(rows) {
-  return rows.map(row => {
-    const [date, sleep, mood, focus, energy, habitsStr, vicesStr, notes] = row;
-    const habits = (habitsStr || '').split(',').map(s => s.trim()).filter(Boolean);
-    const vices = (vicesStr || '').split(',').map(s => s.trim()).filter(Boolean);
-    habits.forEach(h => habitSet.add(h));
-    vices.forEach(v => viceSet.add(v));
-    return {
-      date,
-      sleep: parseFloat(sleep) || 0,
-      mood: parseFloat(mood) || 0,
-      focus: parseFloat(focus) || 0,
-      energy: parseFloat(energy) || 0,
-      habits,
-      vices,
-      notes: notes || ''
-    };
+// Process sheet rows
+function parseSheet(rows) {
+  return rows.map(r => {
+    let [date, sleep, mood, focus, energy, habits, vices, notes] = r;
+    let h = (habits || "").split(",").map(s=>s.trim()).filter(Boolean);
+    let v = (vices || "").split(",").map(s=>s.trim()).filter(Boolean);
+    h.forEach(x=>habitSet.add(x));
+    v.forEach(x=>viceSet.add(x));
+    return { date, sleep:+sleep, mood:+mood, focus:+focus, energy:+energy, habits:h, vices:v, notes:notes||"" };
   });
 }
 
-function buildChart(data) {
-  if (!data.length) return;
-  const ctx = document.getElementById('trendChart').getContext('2d');
-  const labels = data.map(d => d.date);
-  const sleep = data.map(d => d.sleep);
-  const mood = data.map(d => d.mood);
-  const focus = data.map(d => d.focus);
-  const energy = data.map(d => d.energy);
-
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Sleep', data: sleep, backgroundColor: 'rgba(0,255,0,0.3)' },
-        { label: 'Mood', data: mood, backgroundColor: 'rgba(255,255,0,0.3)' },
-        { label: 'Focus', data: focus, backgroundColor: 'rgba(255,255,255,0.3)' },
-        { label: 'Energy', data: energy, backgroundColor: 'rgba(255,0,0,0.3)' }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { labels: { color: 'white' } }
-      },
-      scales: {
-        x: {
-          ticks: {
-            color: 'white',
-            autoSkip: true,
-            maxTicksLimit: Math.floor(labels.length / 14) || 7
-          }
-        },
-        y: {
-          ticks: { color: 'white' },
-          beginAtZero: true,
-          max: 12
-        }
-      }
-    }
+// Render
+function render() {
+  document.getElementById("habitCheckboxes").innerHTML = "";
+  document.getElementById("viceCheckboxes").innerHTML = "";
+  habitSet.forEach(h => {
+    let l = document.createElement("label");
+    l.innerHTML = `<input type="checkbox" name="habit" value="${h}">${h}`;
+    document.getElementById("habitCheckboxes").appendChild(l);
   });
-}
-
-function renderCheckboxes() {
-  const habitCheckboxes = document.getElementById('habitCheckboxes');
-  const viceCheckboxes = document.getElementById('viceCheckboxes');
-  habitCheckboxes.innerHTML = '';
-  viceCheckboxes.innerHTML = '';
-
-  habitSet.forEach(habit => {
-    const label = document.createElement('label');
-    label.innerHTML = `<input type="checkbox" name="habit" value="${habit}"> ${habit}`;
-    habitCheckboxes.appendChild(label);
+  viceSet.forEach(v => {
+    let l = document.createElement("label");
+    l.innerHTML = `<input type="checkbox" name="vice" value="${v}">${v}`;
+    document.getElementById("viceCheckboxes").appendChild(l);
   });
 
-  viceSet.forEach(vice => {
-    const label = document.createElement('label');
-    label.innerHTML = `<input type="checkbox" name="vice" value="${vice}"> ${vice}`;
-    viceCheckboxes.appendChild(label);
-  });
-}
-
-// Fetch sheet data on load
-fetch(sheetReadUrl)
-  .then(res => res.json())
-  .then(json => {
-    logs = parseSheetRows(json);
-    renderCheckboxes();
-    buildChart(logs);
-  })
-  .catch(err => {
-    console.error('Failed to fetch from Google Sheets:', err);
-  });
-
-// Submit handler for posting new entry
-const form = document.getElementById('logForm');
-form.addEventListener('submit', e => {
-  e.preventDefault();
-  const sleep = parseFloat(document.getElementById('sleep').value);
-  const mood = parseFloat(document.getElementById('mood').value);
-  const focus = parseFloat(document.getElementById('focus').value);
-  const energy = parseFloat(document.getElementById('energy').value);
-  const notes = document.getElementById('notes').value;
-
-  const habits = [...document.querySelectorAll('input[name="habit"]:checked')].map(el => el.value);
-  const vices = [...document.querySelectorAll('input[name="vice"]:checked')].map(el => el.value);
-
-  const entry = {
-    date: new Date().toLocaleDateString(),
-    sleep, mood, focus, energy, habits, vices, notes
-  };
-
-  const sheetWebhookUrl = sheetReadUrl;
-
-  fetch(sheetWebhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(entry)
-  })
-    .then(res => res.text())
-    .then(text => {
-      console.log("✅ Google Sheet response:", text);
-      alert("Entry saved and synced!");
-      location.reload();
-    })
-    .catch(err => {
-      console.error("❌ Google Sheet sync failed:", err);
-      alert("Failed to sync with Google Sheets.");
+  const ctx = document.getElementById("trendChart").getContext("2d");
+  const labels = logs.map(x=>x.date);
+  ["sleep","mood","focus","energy"].forEach((key,i) => {
+    if (window.chartInstance) window.chartInstance.destroy();
+    window.chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{
+        label: key.charAt(0).toUpperCase()+key.slice(1),
+        data: logs.map(x=>x[key]),
+        backgroundColor: ["rgba(0,255,0,0.4)", "rgba(255,255,0,0.4)", "rgba(255,0,255,0.4)", "rgba(255,0,0,0.4)"][i]
+      }]},
+      options: { scales:{ x:{ ticks:{ color:"#eee" } }, y:{ beginAtZero:true, max:12, ticks:{color:"#eee"} } }, plugins:{legend:{labels:{color:"#eee"}} } }
     });
+  });
+}
+
+// Fetch initial data
+fetch(sheetURL)
+  .then(r=>r.json())
+  .then(data => { logs = parseSheet(data); render(); })
+  .catch(e=>console.error("Fetch failed:", e));
+
+// Form submit sends POST
+document.getElementById("logForm").addEventListener("submit", e => {
+  e.preventDefault();
+  let entry = {
+    date: new Date().toLocaleDateString(),
+    sleep:+sleep.value, mood:+mood.value, focus:+focus.value, energy:+energy.value,
+    habits:[...document.querySelectorAll('input[name="habit"]:checked')].map(x=>x.value),
+    vices:[...document.querySelectorAll('input[name="vice"]:checked')].map(x=>x.value),
+    notes: notes.value
+  };
+  fetch(sheetURL, {
+    method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(entry)
+  })
+  .then(r=>r.text())
+  .then(txt => {
+    console.log("sync:", txt);
+    logs.push(entry);
+    render();
+  })
+  .catch(err => console.error("POST failed:", err));
+});
