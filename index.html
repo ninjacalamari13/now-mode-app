@@ -1,80 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Now Mode Tracker</title>
   <style>
-    body {
-      background-color: #121212;
-      color: white;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    label {
-      display: block;
-      margin: 12px 0 4px;
-    }
-    input[type=range] {
-      width: 100%;
-    }
-    input, textarea, button {
-      margin-bottom: 10px;
-      width: 100%;
-      padding: 8px;
-      background: #1e1e1e;
-      border: 1px solid #333;
-      color: white;
-    }
-    #habitCheckboxes label,
-    #viceCheckboxes label {
-      display: inline-block;
-      margin: 4px 8px;
-    }
-    canvas {
-      background: #1e1e1e;
-      border: 1px solid #333;
-      margin-bottom: 20px;
-    }
-    .slider-label {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: -8px;
-    }
+    body { background:#121212; color:#eee; font-family:sans-serif; padding:20px; }
+    canvas { background:#1e1e1e; margin-bottom:20px; width:100%; }
+    .slider-label { display:flex; justify-content:space-between; }
+    label input { margin-right:6px; }
   </style>
 </head>
 <body>
-  <h1>Now Mode Daily Log</h1>
-
-  <h2>Trend Graph</h2>
-  <canvas id="trendChart" width="800" height="400"></canvas>
+  <h1>Now Mode Tracker</h1>
+  <canvas id="trendChart" height="200"></canvas>
 
   <form id="logForm">
     <div class="slider-label"><span>Sleep</span><span id="sleepValue">6</span></div>
-    <input type="range" id="sleep" min="0" max="12" step="0.5" value="6" oninput="sleepValue.innerText = this.value">
-
+    <input type="range" id="sleep" min="0" max="12" value="6" oninput="sleepValue.innerText = this.value">
     <div class="slider-label"><span>Mood</span><span id="moodValue">5</span></div>
-    <input type="range" id="mood" min="1" max="10" step="1" value="5" oninput="moodValue.innerText = this.value">
-
+    <input type="range" id="mood" min="1" max="10" value="5" oninput="moodValue.innerText = this.value">
     <div class="slider-label"><span>Focus</span><span id="focusValue">5</span></div>
-    <input type="range" id="focus" min="1" max="10" step="1" value="5" oninput="focusValue.innerText = this.value">
-
+    <input type="range" id="focus" min="1" max="10" value="5" oninput="focusValue.innerText = this.value">
     <div class="slider-label"><span>Energy</span><span id="energyValue">5</span></div>
-    <input type="range" id="energy" min="1" max="10" step="1" value="5" oninput="energyValue.innerText = this.value">
+    <input type="range" id="energy" min="1" max="10" value="5" oninput="energyValue.innerText = this.value">
 
-    <label>Notes:</label>
-    <textarea id="notes" rows="3"></textarea>
+    <h3>Habits</h3><div id="habitCheckboxes"></div>
+    <h3>Vices</h3><div id="viceCheckboxes"></div>
 
-    <h3>Habits</h3>
-    <div id="habitCheckboxes"></div>
-
-    <h3>Vices</h3>
-    <div id="viceCheckboxes"></div>
-
+    <label>Notes</label>
+    <textarea id="notes" rows="2"></textarea>
     <button type="submit">Submit</button>
   </form>
 
-  <!-- Include Chart.js and your app.js -->
+  <!-- Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="app.js"></script>
 </body>
