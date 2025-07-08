@@ -92,10 +92,13 @@ document.getElementById("logForm").addEventListener("submit", e => {
   }
 
   fetch(sheetURL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(entry)
-  })
+  method: "POST",
+  mode: "no-cors",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(entry)
+});
+
+    
     .then(r => r.text())
     .then(txt => {
       console.log("✅ Synced:", txt);
