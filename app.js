@@ -1,7 +1,7 @@
 const sheetURL = "https://script.google.com/macros/s/AKfycbyrXlbeWtMDNIgbw3JbiTp07VkZ7jIqsey-WNTGgRwRvHIGsE8i4lQ2oyJR5SoyLsk/exec";
 let logs = [], habitSet = new Set(), viceSet = new Set();
 
-// Process sheet rows
+// Parse rows from Google Sheet
 function parseSheet(rows) {
   return rows.map(r => {
     let [date, sleep, mood, focus, energy, habits, vices, notes] = r;
@@ -13,7 +13,7 @@ function parseSheet(rows) {
   });
 }
 
-// Render chart and checkboxes
+// Render graph and checkboxes
 function render() {
   if (!logs.length) return;
 
@@ -62,7 +62,7 @@ function render() {
   });
 }
 
-// Fetch initial data
+// Fetch initial data from Google Sheet
 fetch(sheetURL)
   .then(r => r.json())
   .then(data => {
@@ -71,7 +71,7 @@ fetch(sheetURL)
   })
   .catch(e => console.error("Fetch failed:", e));
 
-// Form submission
+// Submit new log entry
 document.getElementById("logForm").addEventListener("submit", e => {
   e.preventDefault();
 
@@ -92,21 +92,19 @@ document.getElementById("logForm").addEventListener("submit", e => {
   }
 
   fetch(sheetURL, {
-  method: "POST",
-  mode: "no-cors",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(entry)
-});
-
-    
-    .then(r => r.text())
-    .then(txt => {
-      console.log("✅ Synced:", txt);
-      logs.push(entry);
-      render();
-    })
-    .catch(err => {
-      console.error("❌ POST failed:", err);
-      alert("Failed to sync with Google Sheets.");
-    });
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(entry)
+  })
+  .then(r => r.text())
+  .then(txt => {
+    console.log("✅ Synced:", txt);
+    logs.push(entry);
+    render();
+  })
+  .catch(err => {
+    console.error("❌ POST failed:", err);
+    alert("Failed to sync with Google Sheets.");
+  });
 });
