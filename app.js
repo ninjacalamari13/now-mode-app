@@ -1,4 +1,4 @@
-const sheetURL = "https://script.google.com/macros/s/AKfycbxPxLmOFqxkwyl44Bg0PgRhSWcciYlpPCbrTvZXpcpNWzqh5Ly8A5myzzo3fLsmlnc/exec";
+const sheetURL = "https://script.google.com/macros/s/AKfycbzIUv_eTR-naHPcUm_JUIdhsm96vu-SVCP-zhhE-y-M5WXLo2DedOKawJKqKpObCTI/exec";
 let logs = [], habitSet = new Set(), viceSet = new Set();
 
 // Process sheet rows
