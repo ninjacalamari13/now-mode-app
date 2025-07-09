@@ -14,6 +14,15 @@ const db = firebase.firestore();
 
 let logs = [], habitSet = new Set(), viceSet = new Set();
 
+function normalizeDate(dateStr) {
+  // Handles MM/DD/YYYY → YYYY-MM-DD
+  if (dateStr.includes("/")) {
+    const [month, day, year] = dateStr.split("/");
+    return `${year.padStart(4, '20')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  return dateStr; // already in correct format
+}
+
 function parseEntries(snapshot) {
   return snapshot.docs.map(doc => {
     const data = doc.data();
@@ -21,8 +30,9 @@ function parseEntries(snapshot) {
     let v = data.vices || [];
     h.forEach(x => habitSet.add(x));
     v.forEach(x => viceSet.add(x));
+
     return {
-      date: new Date(data.date), // force to Date object
+      date: normalizeDate(data.date),
       sleep: +data.sleep,
       mood: +data.mood,
       focus: +data.focus,
@@ -33,6 +43,7 @@ function parseEntries(snapshot) {
     };
   });
 }
+
 
 function render(filteredLogs = logs) {
   const habitContainer = document.getElementById("habitCheckboxes");
