@@ -1,4 +1,4 @@
-// Firebase config
+// Initialize Firebase (already loaded via <script> tag in HTML)
 const firebaseConfig = {
   apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
   authDomain: "now-mode-app.firebaseapp.com",
@@ -17,8 +17,8 @@ let logs = [], habitSet = new Set(), viceSet = new Set();
 function parseEntries(snapshot) {
   return snapshot.docs.map(doc => {
     const data = doc.data();
-    let h = (data.habits || []);
-    let v = (data.vices || []);
+    const h = data.habits || [];
+    const v = data.vices || [];
     h.forEach(x => habitSet.add(x));
     v.forEach(x => viceSet.add(x));
     return {
@@ -37,29 +37,27 @@ function parseEntries(snapshot) {
 function render() {
   if (!logs.length) return;
 
-  const habitContainer = document.getElementById("habitCheckboxes");
-  const viceContainer = document.getElementById("viceCheckboxes");
-  habitContainer.innerHTML = "";
-  viceContainer.innerHTML = "";
+  document.getElementById("habitCheckboxes").innerHTML = "";
+  document.getElementById("viceCheckboxes").innerHTML = "";
 
   habitSet.forEach(h => {
     const label = document.createElement("label");
     label.innerHTML = `<input type="checkbox" name="habit" value="${h}"> ${h}`;
-    habitContainer.appendChild(label);
+    document.getElementById("habitCheckboxes").appendChild(label);
   });
 
   viceSet.forEach(v => {
     const label = document.createElement("label");
     label.innerHTML = `<input type="checkbox" name="vice" value="${v}"> ${v}`;
-    viceContainer.appendChild(label);
+    document.getElementById("viceCheckboxes").appendChild(label);
   });
 
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
-  const labels = logs.map(x => {
-    const d = new Date(x.date);
-    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+  const labels = logs.map(entry => {
+    const date = new Date(entry.date);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   });
 
   window.chartInstance = new Chart(ctx, {
@@ -106,14 +104,8 @@ function render() {
       plugins: { legend: { labels: { color: "#eee" } } },
       scales: {
         x: {
-          type: 'category',
-          ticks: {
-            color: "#eee",
-            maxTicksLimit: 12,
-            callback: function(val, i, ticks) {
-              return i === 0 || val.endsWith("-01");
-            }
-          }
+          type: "category",
+          ticks: { color: "#eee", maxTicksLimit: 12 }
         },
         y: {
           beginAtZero: true,
@@ -126,8 +118,7 @@ function render() {
 }
 
 async function fetchEntries() {
-  const q = query(collection(db, "entries"), orderBy("date"));
-  const snapshot = await getDocs(q);
+  const snapshot = await db.collection("entries").orderBy("date").get();
   logs = parseEntries(snapshot);
   render();
 }
@@ -139,16 +130,16 @@ document.getElementById("logForm").addEventListener("submit", async e => {
 
   const entry = {
     date: new Date().toISOString().split("T")[0],
-    sleep: +sleep.value || 0,
-    mood: +mood.value || 0,
-    focus: +focus.value || 0,
-    energy: +energy.value || 0,
+    sleep: +document.getElementById("sleep").value || 0,
+    mood: +document.getElementById("mood").value || 0,
+    focus: +document.getElementById("focus").value || 0,
+    energy: +document.getElementById("energy").value || 0,
     habits: [...document.querySelectorAll('input[name="habit"]:checked')].map(x => x.value),
     vices: [...document.querySelectorAll('input[name="vice"]:checked')].map(x => x.value),
-    notes: notes.value || ""
+    notes: document.getElementById("notes").value || ""
   };
 
-  await addDoc(collection(db, "entries"), entry);
+  await db.collection("entries").add(entry);
   logs.push(entry);
   render();
 });
