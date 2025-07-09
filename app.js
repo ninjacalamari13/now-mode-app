@@ -1,16 +1,4 @@
-// Initialize Firebase (already loaded via <script> tag in HTML)
-const firebaseConfig = {
-  apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
-  authDomain: "now-mode-app.firebaseapp.com",
-  projectId: "now-mode-app",
-  storageBucket: "now-mode-app.appspot.com",
-  messagingSenderId: "1052464330929",
-  appId: "1:1052464330929:web:fa731c39d32ede1951ca90",
-  measurementId: "G-J3D33XKS78"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// app.js (CDN version with compat-style Firebase)
 
 const firebaseConfig = {
   apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
@@ -22,25 +10,25 @@ const firebaseConfig = {
   measurementId: "G-J3D33XKS78"
 };
 
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-
 
 let logs = [], habitSet = new Set(), viceSet = new Set();
 
 function parseEntries(snapshot) {
   return snapshot.docs.map(doc => {
     const data = doc.data();
-    const h = data.habits || [];
-    const v = data.vices || [];
+    let h = data.habits || [];
+    let v = data.vices || [];
     h.forEach(x => habitSet.add(x));
     v.forEach(x => viceSet.add(x));
     return {
       date: data.date,
-      sleep: +data.sleep || 0,
-      mood: +data.mood || 0,
-      focus: +data.focus || 0,
-      energy: +data.energy || 0,
+      sleep: +data.sleep,
+      mood: +data.mood,
+      focus: +data.focus,
+      energy: +data.energy,
       habits: h,
       vices: v,
       notes: data.notes || ""
@@ -51,26 +39,28 @@ function parseEntries(snapshot) {
 function render() {
   if (!logs.length) return;
 
-  document.getElementById("habitCheckboxes").innerHTML = "";
-  document.getElementById("viceCheckboxes").innerHTML = "";
+  const habitContainer = document.getElementById("habitCheckboxes");
+  const viceContainer = document.getElementById("viceCheckboxes");
+  habitContainer.innerHTML = "";
+  viceContainer.innerHTML = "";
 
   habitSet.forEach(h => {
     const label = document.createElement("label");
     label.innerHTML = `<input type="checkbox" name="habit" value="${h}"> ${h}`;
-    document.getElementById("habitCheckboxes").appendChild(label);
+    habitContainer.appendChild(label);
   });
 
   viceSet.forEach(v => {
     const label = document.createElement("label");
     label.innerHTML = `<input type="checkbox" name="vice" value="${v}"> ${v}`;
-    document.getElementById("viceCheckboxes").appendChild(label);
+    viceContainer.appendChild(label);
   });
 
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
-  const labels = logs.map(entry => {
-    const date = new Date(entry.date);
+  const labels = logs.map(x => {
+    const date = new Date(x.date);
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   });
 
@@ -118,8 +108,8 @@ function render() {
       plugins: { legend: { labels: { color: "#eee" } } },
       scales: {
         x: {
-          type: "category",
-          ticks: { color: "#eee", maxTicksLimit: 12 }
+          type: 'category',
+          ticks: { color: "#eee", maxTicksLimit: 12 },
         },
         y: {
           beginAtZero: true,
@@ -144,13 +134,13 @@ document.getElementById("logForm").addEventListener("submit", async e => {
 
   const entry = {
     date: new Date().toISOString().split("T")[0],
-    sleep: +document.getElementById("sleep").value || 0,
-    mood: +document.getElementById("mood").value || 0,
-    focus: +document.getElementById("focus").value || 0,
-    energy: +document.getElementById("energy").value || 0,
+    sleep: +sleep.value || 0,
+    mood: +mood.value || 0,
+    focus: +focus.value || 0,
+    energy: +energy.value || 0,
     habits: [...document.querySelectorAll('input[name="habit"]:checked')].map(x => x.value),
     vices: [...document.querySelectorAll('input[name="vice"]:checked')].map(x => x.value),
-    notes: document.getElementById("notes").value || ""
+    notes: notes.value || ""
   };
 
   await db.collection("entries").add(entry);
