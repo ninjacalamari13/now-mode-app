@@ -70,7 +70,11 @@ function render(filteredLogs = logs) {
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
-  const labels = filteredLogs.map(x => x.date.toISOString().split("T")[0]);
+const labels = filteredLogs.map(x => {
+  const d = new Date(x.date);
+  if (isNaN(d)) return "Invalid";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+});
   window.chartInstance = new Chart(ctx, {
     type: "line",
     data: {
