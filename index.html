@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Now Mode</title>
-  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAATlBMVEUAAAD///////////////////////////////////////////////////////////////////////////////////////////////////////////////////9b3LauAAAAGHRSTlMAAAAAAAAAAAAAAAAAAAAAAAAABu4JZsAAAABRSURBVBiVdc6xDoAgDEVRz6Dzf3X/n2wTgokcyLE+gFCxQKRFYfKwe2ZJ9lx+NsY9n9f8cLgP3z1Q8rMAVwdBYKQAAAAASUVORK5CYII=" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="icon" type="image/png" href="favicon.ico" />
   <style>
     body {
       background-color: #111;
@@ -41,17 +41,18 @@
       padding: 5px 10px;
       border-radius: 5px;
     }
-    .chart-controls {
+    .graph-controls button {
+      margin-right: 10px;
       margin-bottom: 10px;
-    }
-    .chart-controls button {
       background: #333;
       color: #eee;
-      border: none;
+      border: 1px solid #555;
       padding: 5px 10px;
-      margin-right: 5px;
       border-radius: 5px;
       cursor: pointer;
+    }
+    .graph-controls button:hover {
+      background: #444;
     }
   </style>
 </head>
@@ -74,25 +75,22 @@
     <button type="submit">Submit</button>
   </form>
 
-  <div class="chart-controls">
+  <div class="graph-controls">
     <button onclick="filterChart('all')">View All</button>
     <button onclick="filterChart('ytd')">YTD</button>
-    <button onclick="filterChart('year')">Past Year</button>
-    <button onclick="filterChart('month')">Month</button>
-    <button onclick="filterChart('week')">Week</button>
+    <button onclick="filterChart('year')">1Y</button>
+    <button onclick="filterChart('month')">1M</button>
+    <button onclick="filterChart('week')">1W</button>
   </div>
 
   <canvas id="trendChart" height="200"></canvas>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-  <!-- Chart.js -->
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Your app logic -->
   <script src="app.js"></script>
 </body>
 </html>
+
 
