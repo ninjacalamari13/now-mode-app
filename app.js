@@ -1,5 +1,4 @@
-// app.js (CDN version with compat-style Firebase)
-
+// app.js (Now Mode with Firebase + Graph Filters)
 const firebaseConfig = {
   apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
   authDomain: "now-mode-app.firebaseapp.com",
@@ -10,7 +9,6 @@ const firebaseConfig = {
   measurementId: "G-J3D33XKS78"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -36,9 +34,7 @@ function parseEntries(snapshot) {
   });
 }
 
-function render() {
-  if (!logs.length) return;
-
+function render(filteredLogs = logs) {
   const habitContainer = document.getElementById("habitCheckboxes");
   const viceContainer = document.getElementById("viceCheckboxes");
   habitContainer.innerHTML = "";
@@ -59,11 +55,7 @@ function render() {
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
-  const labels = logs.map(x => {
-    const date = new Date(x.date);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-  });
-
+  const labels = filteredLogs.map(x => x.date);
   window.chartInstance = new Chart(ctx, {
     type: "line",
     data: {
@@ -71,7 +63,7 @@ function render() {
       datasets: [
         {
           label: "Focus",
-          data: logs.map(x => x.focus),
+          data: filteredLogs.map(x => x.focus),
           borderColor: "white",
           backgroundColor: "rgba(255,255,255,0.2)",
           fill: true,
@@ -79,7 +71,7 @@ function render() {
         },
         {
           label: "Energy",
-          data: logs.map(x => x.energy),
+          data: filteredLogs.map(x => x.energy),
           borderColor: "red",
           backgroundColor: "rgba(255,0,0,0.2)",
           fill: true,
@@ -87,7 +79,7 @@ function render() {
         },
         {
           label: "Mood",
-          data: logs.map(x => x.mood),
+          data: filteredLogs.map(x => x.mood),
           borderColor: "yellow",
           backgroundColor: "rgba(255,255,0,0.2)",
           fill: true,
@@ -95,7 +87,7 @@ function render() {
         },
         {
           label: "Sleep",
-          data: logs.map(x => x.sleep),
+          data: filteredLogs.map(x => x.sleep),
           borderColor: "blue",
           backgroundColor: "rgba(0,0,255,0.2)",
           fill: true,
@@ -109,7 +101,7 @@ function render() {
       scales: {
         x: {
           type: 'category',
-          ticks: { color: "#eee", maxTicksLimit: 12 },
+          ticks: { color: "#eee" },
         },
         y: {
           beginAtZero: true,
@@ -119,6 +111,30 @@ function render() {
       }
     }
   });
+}
+
+function filterChart(range) {
+  const now = new Date();
+  let filtered = logs;
+
+  if (range === 'ytd') {
+    const start = new Date(now.getFullYear(), 0, 1);
+    filtered = logs.filter(log => new Date(log.date) >= start);
+  } else if (range === 'year') {
+    const lastYear = new Date(now);
+    lastYear.setFullYear(now.getFullYear() - 1);
+    filtered = logs.filter(log => new Date(log.date) >= lastYear);
+  } else if (range === 'month') {
+    const lastMonth = new Date(now);
+    lastMonth.setMonth(now.getMonth() - 1);
+    filtered = logs.filter(log => new Date(log.date) >= lastMonth);
+  } else if (range === 'week') {
+    const lastWeek = new Date(now);
+    lastWeek.setDate(now.getDate() - 7);
+    filtered = logs.filter(log => new Date(log.date) >= lastWeek);
+  }
+
+  render(filtered);
 }
 
 async function fetchEntries() {
@@ -131,7 +147,6 @@ fetchEntries();
 
 document.getElementById("logForm").addEventListener("submit", async e => {
   e.preventDefault();
-
   const entry = {
     date: new Date().toISOString().split("T")[0],
     sleep: +sleep.value || 0,
