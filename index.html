@@ -62,6 +62,16 @@
   </style>
 </head>
 <body>
+  <canvas id="trendChart" height="200"></canvas>
+
+  <div class="graph-controls">
+    <button onclick="filterChart('all')">View All</button>
+    <button onclick="filterChart('ytd')">YTD</button>
+    <button onclick="filterChart('year')">1Y</button>
+    <button onclick="filterChart('month')">1M</button>
+    <button onclick="filterChart('week')">1W</button>
+  </div>
+
   <h1>Now Mode Habit Logger</h1>
 
   <form id="logForm">
@@ -98,16 +108,6 @@
     <label>Notes:<br /><textarea id="notes" rows="3" style="width: 100%"></textarea></label>
     <button type="submit">Submit</button>
   </form>
-
-  <div class="graph-controls">
-    <button onclick="filterChart('all')">View All</button>
-    <button onclick="filterChart('ytd')">YTD</button>
-    <button onclick="filterChart('year')">1Y</button>
-    <button onclick="filterChart('month')">1M</button>
-    <button onclick="filterChart('week')">1W</button>
-  </div>
-
-  <canvas id="trendChart" height="200"></canvas>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js?v=2"></script>
