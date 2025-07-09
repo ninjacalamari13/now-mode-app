@@ -12,6 +12,20 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+const firebaseConfig = {
+  apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
+  authDomain: "now-mode-app.firebaseapp.com",
+  projectId: "now-mode-app",
+  storageBucket: "now-mode-app.appspot.com",
+  messagingSenderId: "1052464330929",
+  appId: "1:1052464330929:web:fa731c39d32ede1951ca90",
+  measurementId: "G-J3D33XKS78"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+
 let logs = [], habitSet = new Set(), viceSet = new Set();
 
 function parseEntries(snapshot) {
