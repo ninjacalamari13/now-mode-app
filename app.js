@@ -1,4 +1,4 @@
-// app.js (Now Mode with Firebase + Graph Filters and Fixes)
+// app.js
 const firebaseConfig = {
   apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
   authDomain: "now-mode-app.firebaseapp.com",
@@ -12,31 +12,29 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-let logs = [], habitSet = new Set(), viceSet = new Set();
+let logs = [], filteredLogs = [], habitSet = new Set(), viceSet = new Set();
 
-function normalizeDate(dateStr) {
-  // Handles MM/DD/YYYY → YYYY-MM-DD
-  if (dateStr.includes("/")) {
-    const [month, day, year] = dateStr.split("/");
-    return `${year.padStart(4, '20')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+function parseDate(rawDate) {
+  if (rawDate instanceof firebase.firestore.Timestamp) {
+    return rawDate.toDate();
   }
-  return dateStr; // already in correct format
+  const parsed = new Date(rawDate);
+  return isNaN(parsed) ? new Date() : parsed;
 }
 
 function parseEntries(snapshot) {
   return snapshot.docs.map(doc => {
     const data = doc.data();
-    let h = data.habits || [];
-    let v = data.vices || [];
+    let h = Array.isArray(data.habits) ? data.habits : [];
+    let v = Array.isArray(data.vices) ? data.vices : [];
     h.forEach(x => habitSet.add(x));
     v.forEach(x => viceSet.add(x));
-
     return {
-      date: normalizeDate(data.date),
-      sleep: +data.sleep,
-      mood: +data.mood,
-      focus: +data.focus,
-      energy: +data.energy,
+      date: parseDate(data.date),
+      sleep: +data.sleep || 0,
+      mood: +data.mood || 0,
+      focus: +data.focus || 0,
+      energy: +data.energy || 0,
       habits: h,
       vices: v,
       notes: data.notes || ""
@@ -44,8 +42,7 @@ function parseEntries(snapshot) {
   });
 }
 
-
-function render(filteredLogs = logs) {
+function renderCheckboxes() {
   const habitContainer = document.getElementById("habitCheckboxes");
   const viceContainer = document.getElementById("viceCheckboxes");
   habitContainer.innerHTML = "";
@@ -66,15 +63,14 @@ function render(filteredLogs = logs) {
     label.innerHTML = `<input type="checkbox" id="${id}" name="vice" value="${v}" checked> ${v}`;
     viceContainer.appendChild(label);
   });
+}
 
+function renderChart() {
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
-const labels = filteredLogs.map(x => {
-  const d = new Date(x.date);
-  if (isNaN(d)) return "Invalid";
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-});
+  const labels = filteredLogs.map(x => x.date.toISOString().split("T")[0]);
+
   window.chartInstance = new Chart(ctx, {
     type: "line",
     data: {
@@ -120,7 +116,7 @@ const labels = filteredLogs.map(x => {
       scales: {
         x: {
           type: 'category',
-          ticks: { color: "#eee" }
+          ticks: { color: "#eee" },
         },
         y: {
           beginAtZero: true,
@@ -134,51 +130,47 @@ const labels = filteredLogs.map(x => {
 
 function filterChart(range) {
   const now = new Date();
-  let filtered = logs;
-
-  if (range === 'ytd') {
-    const start = new Date(now.getFullYear(), 0, 1);
-    filtered = logs.filter(log => log.date >= start);
-  } else if (range === 'year') {
-    const lastYear = new Date(now);
-    lastYear.setFullYear(now.getFullYear() - 1);
-    filtered = logs.filter(log => log.date >= lastYear);
-  } else if (range === 'month') {
-    const lastMonth = new Date(now);
-    lastMonth.setMonth(now.getMonth() - 1);
-    filtered = logs.filter(log => log.date >= lastMonth);
-  } else if (range === 'week') {
-    const lastWeek = new Date(now);
-    lastWeek.setDate(now.getDate() - 7);
-    filtered = logs.filter(log => log.date >= lastWeek);
-  }
-
-  render(filtered);
+  filteredLogs = logs.filter(entry => {
+    const daysDiff = (now - entry.date) / (1000 * 60 * 60 * 24);
+    switch (range) {
+      case 'week': return daysDiff <= 7;
+      case 'month': return daysDiff <= 30;
+      case 'year': return daysDiff <= 365;
+      case 'ytd': return entry.date.getFullYear() === now.getFullYear();
+      default: return true;
+    }
+  });
+  renderChart();
 }
 
 async function fetchEntries() {
   const snapshot = await db.collection("entries").orderBy("date").get();
   logs = parseEntries(snapshot);
-  render();
+  filteredLogs = logs;
+  renderCheckboxes();
+  renderChart();
 }
 
 fetchEntries();
 
 document.getElementById("logForm").addEventListener("submit", async e => {
   e.preventDefault();
+
   const entry = {
-    date: new Date().toISOString().split("T")[0],
-    sleep: +sleep.value || 0,
-    mood: +mood.value || 0,
-    focus: +focus.value || 0,
-    energy: +energy.value || 0,
+    date: new Date(),
+    sleep: +document.getElementById("sleep").value,
+    mood: +document.getElementById("mood").value,
+    focus: +document.getElementById("focus").value,
+    energy: +document.getElementById("energy").value,
     habits: [...document.querySelectorAll('input[name="habit"]:checked')].map(x => x.value),
     vices: [...document.querySelectorAll('input[name="vice"]:checked')].map(x => x.value),
-    notes: notes.value || ""
+    notes: document.getElementById("notes").value
   };
 
   await db.collection("entries").add(entry);
-  logs.push({ ...entry, date: new Date(entry.date) });
-  render();
+  logs.push(entry);
+  filteredLogs = logs;
+  renderChart();
 });
+
 
