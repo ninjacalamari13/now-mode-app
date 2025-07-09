@@ -1,7 +1,4 @@
-// app.js (Firebase-integrated version with relaxed validation)
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, addDoc, query, orderBy } from "firebase/firestore";
-
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
   authDomain: "now-mode-app.firebaseapp.com",
@@ -12,8 +9,8 @@ const firebaseConfig = {
   measurementId: "G-J3D33XKS78"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 let logs = [], habitSet = new Set(), viceSet = new Set();
 
