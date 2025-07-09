@@ -1,4 +1,4 @@
-// app.js (Firebase-integrated version)
+// app.js (Firebase-integrated version with relaxed validation)
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, getDocs, addDoc, query, orderBy } from "firebase/firestore";
 
@@ -20,16 +20,16 @@ let logs = [], habitSet = new Set(), viceSet = new Set();
 function parseEntries(snapshot) {
   return snapshot.docs.map(doc => {
     const data = doc.data();
-    let h = data.habits || [];
-    let v = data.vices || [];
+    let h = (data.habits || []);
+    let v = (data.vices || []);
     h.forEach(x => habitSet.add(x));
     v.forEach(x => viceSet.add(x));
     return {
       date: data.date,
-      sleep: +data.sleep,
-      mood: +data.mood,
-      focus: +data.focus,
-      energy: +data.energy,
+      sleep: +data.sleep || 0,
+      mood: +data.mood || 0,
+      focus: +data.focus || 0,
+      energy: +data.energy || 0,
       habits: h,
       vices: v,
       notes: data.notes || ""
@@ -61,8 +61,8 @@ function render() {
   if (window.chartInstance) window.chartInstance.destroy();
 
   const labels = logs.map(x => {
-    const [month, day, year] = new Date(x.date).toLocaleDateString().split("/");
-    return `${year}-${month}`;
+    const d = new Date(x.date);
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
   });
 
   window.chartInstance = new Chart(ctx, {
@@ -110,7 +110,13 @@ function render() {
       scales: {
         x: {
           type: 'category',
-          ticks: { color: "#eee", maxTicksLimit: 12 },
+          ticks: {
+            color: "#eee",
+            maxTicksLimit: 12,
+            callback: function(val, i, ticks) {
+              return i === 0 || val.endsWith("-01");
+            }
+          }
         },
         y: {
           beginAtZero: true,
@@ -136,10 +142,10 @@ document.getElementById("logForm").addEventListener("submit", async e => {
 
   const entry = {
     date: new Date().toISOString().split("T")[0],
-    sleep: sleep.value ? +sleep.value : null,
-    mood: mood.value ? +mood.value : null,
-    focus: focus.value ? +focus.value : null,
-    energy: energy.value ? +energy.value : null,
+    sleep: +sleep.value || 0,
+    mood: +mood.value || 0,
+    focus: +focus.value || 0,
+    energy: +energy.value || 0,
     habits: [...document.querySelectorAll('input[name="habit"]:checked')].map(x => x.value),
     vices: [...document.querySelectorAll('input[name="vice"]:checked')].map(x => x.value),
     notes: notes.value || ""
