@@ -20,8 +20,8 @@ let logs = [], habitSet = new Set(), viceSet = new Set();
 function parseEntries(snapshot) {
   return snapshot.docs.map(doc => {
     const data = doc.data();
-    let h = (data.habits || []);
-    let v = (data.vices || []);
+    let h = data.habits || [];
+    let v = data.vices || [];
     h.forEach(x => habitSet.add(x));
     v.forEach(x => viceSet.add(x));
     return {
@@ -136,21 +136,17 @@ document.getElementById("logForm").addEventListener("submit", async e => {
 
   const entry = {
     date: new Date().toISOString().split("T")[0],
-    sleep: +sleep.value,
-    mood: +mood.value,
-    focus: +focus.value,
-    energy: +energy.value,
+    sleep: sleep.value ? +sleep.value : null,
+    mood: mood.value ? +mood.value : null,
+    focus: focus.value ? +focus.value : null,
+    energy: energy.value ? +energy.value : null,
     habits: [...document.querySelectorAll('input[name="habit"]:checked')].map(x => x.value),
     vices: [...document.querySelectorAll('input[name="vice"]:checked')].map(x => x.value),
     notes: notes.value || ""
   };
 
-  if (isNaN(entry.sleep) || isNaN(entry.mood) || isNaN(entry.focus) || isNaN(entry.energy)) {
-    alert("Please fill out all sliders before submitting.");
-    return;
-  }
-
   await addDoc(collection(db, "entries"), entry);
   logs.push(entry);
   render();
 });
+
