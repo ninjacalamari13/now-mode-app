@@ -45,8 +45,6 @@
       background: #222;
       padding: 5px 10px;
       border-radius: 5px;
-      color: white;
-      cursor: pointer;
     }
     .graph-controls button {
       margin-right: 10px;
@@ -61,69 +59,35 @@
     .graph-controls button:hover {
       background: #444;
     }
-    .slider-color input[type=range]::-webkit-slider-thumb {
-      background: #0ff;
-    }
-    .slider-color input[type=range]::-moz-range-thumb {
-      background: #0ff;
-    }
-    textarea {
-      background: #222;
-      color: #eee;
-      border: 1px solid #444;
-      border-radius: 5px;
-      padding: 5px;
-    }
-    button[type=submit] {
-      background: #444;
-      color: #fff;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button[type=submit]:hover {
-      background: #555;
-    }
   </style>
 </head>
 <body>
   <h1>Now Mode Habit Logger</h1>
-
-  <canvas id="trendChart" height="200"></canvas>
-
-  <div class="graph-controls">
-    <button onclick="filterChart('all')">View All</button>
-    <button onclick="filterChart('ytd')">YTD</button>
-    <button onclick="filterChart('year')">1Y</button>
-    <button onclick="filterChart('month')">1M</button>
-    <button onclick="filterChart('week')">1W</button>
-  </div>
 
   <form id="logForm">
     <div class="range-label">
       <label for="sleep">Sleep:</label>
       <span id="sleepVal">6</span>
     </div>
-    <input class="slider-color" type="range" id="sleep" min="0" max="12" step="0.5" value="6" oninput="sleepVal.innerText = this.value" />
+    <input type="range" id="sleep" min="0" max="12" step="0.5" value="6" oninput="sleepVal.innerText = this.value" />
 
     <div class="range-label">
       <label for="mood">Mood:</label>
       <span id="moodVal">5</span>
     </div>
-    <input class="slider-color" type="range" id="mood" min="0" max="10" step="1" value="5" oninput="moodVal.innerText = this.value" />
+    <input type="range" id="mood" min="0" max="10" step="1" value="5" oninput="moodVal.innerText = this.value" />
 
     <div class="range-label">
       <label for="focus">Focus:</label>
       <span id="focusVal">5</span>
     </div>
-    <input class="slider-color" type="range" id="focus" min="0" max="10" step="1" value="5" oninput="focusVal.innerText = this.value" />
+    <input type="range" id="focus" min="0" max="10" step="1" value="5" oninput="focusVal.innerText = this.value" />
 
     <div class="range-label">
       <label for="energy">Energy:</label>
       <span id="energyVal">5</span>
     </div>
-    <input class="slider-color" type="range" id="energy" min="0" max="10" step="1" value="5" oninput="energyVal.innerText = this.value" />
+    <input type="range" id="energy" min="0" max="10" step="1" value="5" oninput="energyVal.innerText = this.value" />
 
     <div><strong>Habits:</strong></div>
     <div id="habitCheckboxes" class="checkbox-group"></div>
@@ -134,6 +98,16 @@
     <label>Notes:<br /><textarea id="notes" rows="3" style="width: 100%"></textarea></label>
     <button type="submit">Submit</button>
   </form>
+
+  <div class="graph-controls">
+    <button onclick="filterChart('all')">View All</button>
+    <button onclick="filterChart('ytd')">YTD</button>
+    <button onclick="filterChart('year')">1Y</button>
+    <button onclick="filterChart('month')">1M</button>
+    <button onclick="filterChart('week')">1W</button>
+  </div>
+
+  <canvas id="trendChart" height="200"></canvas>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js?v=2"></script>
