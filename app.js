@@ -1,4 +1,4 @@
-// app.js (Now Mode with Firebase + Graph Filters)
+// app.js (Now Mode with Firebase + Graph Filters and Fixes)
 const firebaseConfig = {
   apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
   authDomain: "now-mode-app.firebaseapp.com",
@@ -22,7 +22,7 @@ function parseEntries(snapshot) {
     h.forEach(x => habitSet.add(x));
     v.forEach(x => viceSet.add(x));
     return {
-      date: data.date,
+      date: new Date(data.date), // force to Date object
       sleep: +data.sleep,
       mood: +data.mood,
       focus: +data.focus,
@@ -41,21 +41,25 @@ function render(filteredLogs = logs) {
   viceContainer.innerHTML = "";
 
   habitSet.forEach(h => {
+    const id = `habit_${h}`.replace(/\s+/g, '_');
     const label = document.createElement("label");
-    label.innerHTML = `<input type="checkbox" name="habit" value="${h}"> ${h}`;
+    label.setAttribute("for", id);
+    label.innerHTML = `<input type="checkbox" id="${id}" name="habit" value="${h}" checked> ${h}`;
     habitContainer.appendChild(label);
   });
 
   viceSet.forEach(v => {
+    const id = `vice_${v}`.replace(/\s+/g, '_');
     const label = document.createElement("label");
-    label.innerHTML = `<input type="checkbox" name="vice" value="${v}"> ${v}`;
+    label.setAttribute("for", id);
+    label.innerHTML = `<input type="checkbox" id="${id}" name="vice" value="${v}" checked> ${v}`;
     viceContainer.appendChild(label);
   });
 
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
-  const labels = filteredLogs.map(x => x.date);
+  const labels = filteredLogs.map(x => x.date.toISOString().split("T")[0]);
   window.chartInstance = new Chart(ctx, {
     type: "line",
     data: {
@@ -101,7 +105,7 @@ function render(filteredLogs = logs) {
       scales: {
         x: {
           type: 'category',
-          ticks: { color: "#eee" },
+          ticks: { color: "#eee" }
         },
         y: {
           beginAtZero: true,
@@ -119,19 +123,19 @@ function filterChart(range) {
 
   if (range === 'ytd') {
     const start = new Date(now.getFullYear(), 0, 1);
-    filtered = logs.filter(log => new Date(log.date) >= start);
+    filtered = logs.filter(log => log.date >= start);
   } else if (range === 'year') {
     const lastYear = new Date(now);
     lastYear.setFullYear(now.getFullYear() - 1);
-    filtered = logs.filter(log => new Date(log.date) >= lastYear);
+    filtered = logs.filter(log => log.date >= lastYear);
   } else if (range === 'month') {
     const lastMonth = new Date(now);
     lastMonth.setMonth(now.getMonth() - 1);
-    filtered = logs.filter(log => new Date(log.date) >= lastMonth);
+    filtered = logs.filter(log => log.date >= lastMonth);
   } else if (range === 'week') {
     const lastWeek = new Date(now);
     lastWeek.setDate(now.getDate() - 7);
-    filtered = logs.filter(log => new Date(log.date) >= lastWeek);
+    filtered = logs.filter(log => log.date >= lastWeek);
   }
 
   render(filtered);
@@ -159,7 +163,7 @@ document.getElementById("logForm").addEventListener("submit", async e => {
   };
 
   await db.collection("entries").add(entry);
-  logs.push(entry);
+  logs.push({ ...entry, date: new Date(entry.date) });
   render();
 });
 
