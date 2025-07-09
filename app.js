@@ -1,8 +1,3 @@
-// Assuming the original app.js fetches and renders data using Chart.js and Firebase
-// Let's confirm and enhance it based on the updated visual requirements
-
-// Firebase setup
-
 // Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
@@ -20,6 +15,36 @@ const db = firebase.firestore();
 
 const ctx = document.getElementById('trendChart').getContext('2d');
 let trendChart;
+
+const habits = ['Meditation', 'Exercise', 'Reading', 'Cold Shower'];
+const vices = ['Alcohol', 'Junk Food', 'Procrastination', 'Social Media'];
+
+function populateCheckboxes() {
+  const habitContainer = document.getElementById('habitCheckboxes');
+  const viceContainer = document.getElementById('viceCheckboxes');
+
+  habits.forEach(habit => {
+    const label = document.createElement('label');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = habit;
+    checkbox.name = 'habits';
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(habit));
+    habitContainer.appendChild(label);
+  });
+
+  vices.forEach(vice => {
+    const label = document.createElement('label');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = vice;
+    checkbox.name = 'vices';
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(vice));
+    viceContainer.appendChild(label);
+  });
+}
 
 function fetchDataAndRenderChart() {
   db.collection('entries').orderBy('timestamp', 'asc').get().then(snapshot => {
@@ -76,35 +101,51 @@ function renderChart(data) {
       scales: {
         x: {
           ticks: {
-            callback: function(value, index, ticks) {
-              const shown = new Set();
-              const label = this.getLabelForValue(value);
-              if (!shown.has(label)) {
-                shown.add(label);
-                return label;
-              }
-              return '';
-            },
-            color: '#aaa'
+            color: '#aaa',
+            autoSkip: true,
+            maxTicksLimit: 12
           }
         },
         y: {
           beginAtZero: true,
-          color: '#aaa'
+          ticks: { color: '#aaa' }
         }
       },
       plugins: {
         legend: {
-          labels: {
-            color: '#eee'
-          }
+          labels: { color: '#eee' }
         }
       }
     }
   });
 }
 
-fetchDataAndRenderChart();
+function saveEntry(e) {
+  e.preventDefault();
+  const sleep = parseFloat(document.getElementById('sleep').value);
+  const mood = parseFloat(document.getElementById('mood').value);
+  const focus = parseFloat(document.getElementById('focus').value);
+  const energy = parseFloat(document.getElementById('energy').value);
+  const notes = document.getElementById('notes').value;
 
-// Your log form handling and Firebase submission code goes below here...
-// Already present in the original file (assumed). Let me know if you want that upgraded or themed too.
+  const selectedHabits = Array.from(document.querySelectorAll('input[name="habits"]:checked')).map(cb => cb.value);
+  const selectedVices = Array.from(document.querySelectorAll('input[name="vices"]:checked')).map(cb => cb.value);
+
+  const entry = {
+    timestamp: new Date().toISOString(),
+    sleep, mood, focus, energy,
+    habits: selectedHabits,
+    vices: selectedVices,
+    notes
+  };
+
+  db.collection('entries').add(entry).then(() => {
+    alert('Entry saved!');
+    document.getElementById('logForm').reset();
+    fetchDataAndRenderChart();
+  });
+}
+
+populateCheckboxes();
+fetchDataAndRenderChart();
+document.getElementById('logForm').addEventListener('submit', saveEntry);
