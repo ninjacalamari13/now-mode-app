@@ -1,4 +1,4 @@
-// Firebase configuration
+// app.js
 const firebaseConfig = {
   apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
   authDomain: "now-mode-app.firebaseapp.com",
@@ -9,143 +9,180 @@ const firebaseConfig = {
   measurementId: "G-J3D33XKS78"
 };
 
-// Firebase setup
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const ctx = document.getElementById('trendChart').getContext('2d');
-let trendChart;
+let logs = [], filteredLogs = [], habitSet = new Set(), viceSet = new Set();
 
-const habits = ['Meditation', 'Exercise', 'Reading', 'Cold Shower'];
-const vices = ['Alcohol', 'Junk Food', 'Procrastination', 'Social Media'];
+function parseDate(rawDate) {
+  if (rawDate instanceof firebase.firestore.Timestamp) {
+    return rawDate.toDate();
+  }
 
-function populateCheckboxes() {
-  const habitContainer = document.getElementById('habitCheckboxes');
-  const viceContainer = document.getElementById('viceCheckboxes');
+  if (typeof rawDate === "string" && rawDate.includes("/")) {
+    const [month, day, year] = rawDate.split("/").map(part => parseInt(part, 10));
+    return new Date(year, month - 1, day);
+  }
 
-  habits.forEach(habit => {
-    const label = document.createElement('label');
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.value = habit;
-    checkbox.name = 'habits';
-    label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(habit));
+  const parsed = new Date(rawDate);
+  return isNaN(parsed) ? new Date() : parsed;
+}
+
+
+function parseEntries(snapshot) {
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+let h = Array.isArray(data.habits)
+  ? data.habits
+  : (typeof data.habits === "string" ? data.habits.split(",").map(x => x.trim()) : []);
+
+let v = Array.isArray(data.vices)
+  ? data.vices
+  : (typeof data.vices === "string" ? data.vices.split(",").map(x => x.trim()) : []);
+
+    h.forEach(x => habitSet.add(x));
+    v.forEach(x => viceSet.add(x));
+    return {
+      date: parseDate(data.date),
+      sleep: +data.sleep || 0,
+      mood: +data.mood || 0,
+      focus: +data.focus || 0,
+      energy: +data.energy || 0,
+      habits: h,
+      vices: v,
+      notes: data.notes || ""
+    };
+  });
+}
+
+function renderCheckboxes() {
+  const habitContainer = document.getElementById("habitCheckboxes");
+  const viceContainer = document.getElementById("viceCheckboxes");
+  habitContainer.innerHTML = "";
+  viceContainer.innerHTML = "";
+
+  habitSet.forEach(h => {
+    const id = `habit_${h}`.replace(/\s+/g, '_');
+    const label = document.createElement("label");
+    label.setAttribute("for", id);
+    label.innerHTML = `<input type="checkbox" id="${id}" name="habit" value="${h}" checked> ${h}`;
     habitContainer.appendChild(label);
   });
 
-  vices.forEach(vice => {
-    const label = document.createElement('label');
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.value = vice;
-    checkbox.name = 'vices';
-    label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(vice));
+  viceSet.forEach(v => {
+    const id = `vice_${v}`.replace(/\s+/g, '_');
+    const label = document.createElement("label");
+    label.setAttribute("for", id);
+    label.innerHTML = `<input type="checkbox" id="${id}" name="vice" value="${v}" checked> ${v}`;
     viceContainer.appendChild(label);
   });
 }
 
-function fetchDataAndRenderChart() {
-  db.collection('entries').orderBy('timestamp', 'asc').get().then(snapshot => {
-    const data = snapshot.docs.map(doc => doc.data());
-    renderChart(data);
-  });
-}
+function renderChart() {
+  const ctx = document.getElementById("trendChart").getContext("2d");
+  if (window.chartInstance) window.chartInstance.destroy();
 
-function renderChart(data) {
-  const labels = data.map(entry => {
-    const date = new Date(entry.timestamp);
-    return date.toLocaleDateString(undefined, { month: '2-digit', year: 'numeric' });
-  });
+  const labels = filteredLogs.map(x => x.date.toISOString().split("T")[0]);
 
-  const mood = data.map(entry => entry.mood);
-  const focus = data.map(entry => entry.focus);
-  const energy = data.map(entry => entry.energy);
-
-  if (trendChart) trendChart.destroy();
-
-  trendChart = new Chart(ctx, {
-    type: 'line',
+  window.chartInstance = new Chart(ctx, {
+    type: "line",
     data: {
       labels,
       datasets: [
         {
-          label: 'Mood',
-          data: mood,
-          borderColor: 'rgba(255, 99, 132, 1)',
-          backgroundColor: 'rgba(255, 99, 132, 0.1)',
-          tension: 0.4,
-          pointRadius: 0,
+          label: "Focus",
+          data: filteredLogs.map(x => x.focus),
+          borderColor: "white",
+          backgroundColor: "rgba(255,255,255,0.2)",
+          fill: true,
+          tension: 0.3
         },
         {
-          label: 'Focus',
-          data: focus,
-          borderColor: 'rgba(54, 162, 235, 1)',
-          backgroundColor: 'rgba(54, 162, 235, 0.1)',
-          tension: 0.4,
-          pointRadius: 0,
+          label: "Energy",
+          data: filteredLogs.map(x => x.energy),
+          borderColor: "red",
+          backgroundColor: "rgba(255,0,0,0.2)",
+          fill: true,
+          tension: 0.3
         },
         {
-          label: 'Energy',
-          data: energy,
-          borderColor: 'rgba(255, 206, 86, 1)',
-          backgroundColor: 'rgba(255, 206, 86, 0.1)',
-          tension: 0.4,
-          pointRadius: 0,
+          label: "Mood",
+          data: filteredLogs.map(x => x.mood),
+          borderColor: "yellow",
+          backgroundColor: "rgba(255,255,0,0.2)",
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: "Sleep",
+          data: filteredLogs.map(x => x.sleep),
+          borderColor: "blue",
+          backgroundColor: "rgba(0,0,255,0.2)",
+          fill: true,
+          tension: 0.3
         }
       ]
     },
     options: {
       responsive: true,
+      plugins: { legend: { labels: { color: "#eee" } } },
       scales: {
         x: {
-          ticks: {
-            color: '#aaa',
-            autoSkip: true,
-            maxTicksLimit: 12
-          }
+          type: 'category',
+          ticks: { color: "#eee" },
         },
         y: {
           beginAtZero: true,
-          ticks: { color: '#aaa' }
-        }
-      },
-      plugins: {
-        legend: {
-          labels: { color: '#eee' }
+          max: 12,
+          ticks: { color: "#eee" }
         }
       }
     }
   });
 }
 
-function saveEntry(e) {
-  e.preventDefault();
-  const sleep = parseFloat(document.getElementById('sleep').value);
-  const mood = parseFloat(document.getElementById('mood').value);
-  const focus = parseFloat(document.getElementById('focus').value);
-  const energy = parseFloat(document.getElementById('energy').value);
-  const notes = document.getElementById('notes').value;
-
-  const selectedHabits = Array.from(document.querySelectorAll('input[name="habits"]:checked')).map(cb => cb.value);
-  const selectedVices = Array.from(document.querySelectorAll('input[name="vices"]:checked')).map(cb => cb.value);
-
-  const entry = {
-    timestamp: new Date().toISOString(),
-    sleep, mood, focus, energy,
-    habits: selectedHabits,
-    vices: selectedVices,
-    notes
-  };
-
-  db.collection('entries').add(entry).then(() => {
-    alert('Entry saved!');
-    document.getElementById('logForm').reset();
-    fetchDataAndRenderChart();
+function filterChart(range) {
+  const now = new Date();
+  filteredLogs = logs.filter(entry => {
+    const daysDiff = (now - entry.date) / (1000 * 60 * 60 * 24);
+    switch (range) {
+      case 'week': return daysDiff <= 7;
+      case 'month': return daysDiff <= 30;
+      case 'year': return daysDiff <= 365;
+      case 'ytd': return entry.date.getFullYear() === now.getFullYear();
+      default: return true;
+    }
   });
+  renderChart();
 }
 
-populateCheckboxes();
-fetchDataAndRenderChart();
-document.getElementById('logForm').addEventListener('submit', saveEntry);
+async function fetchEntries() {
+  const snapshot = await db.collection("entries").orderBy("date").get();
+  logs = parseEntries(snapshot);
+  filteredLogs = logs;
+  renderCheckboxes();
+  renderChart();
+}
+
+fetchEntries();
+
+document.getElementById("logForm").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const entry = {
+    date: new Date(),
+    sleep: +document.getElementById("sleep").value,
+    mood: +document.getElementById("mood").value,
+    focus: +document.getElementById("focus").value,
+    energy: +document.getElementById("energy").value,
+    habits: [...document.querySelectorAll('input[name="habit"]:checked')].map(x => x.value),
+    vices: [...document.querySelectorAll('input[name="vice"]:checked')].map(x => x.value),
+    notes: document.getElementById("notes").value
+  };
+
+  await db.collection("entries").add(entry);
+  logs.push(entry);
+  filteredLogs = logs;
+  renderChart();
+});
+
