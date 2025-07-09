@@ -61,22 +61,21 @@ function renderCheckboxes() {
   habitContainer.innerHTML = "";
   viceContainer.innerHTML = "";
 
-  habitSet.forEach(h => {
-    const id = `habit_${h}`.replace(/\s+/g, '_');
-    const label = document.createElement("label");
-    label.setAttribute("for", id);
-    label.innerHTML = `<input type="checkbox" id="${id}" name="habit" value="${h}" checked> ${h}`;
-    habitContainer.appendChild(label);
-  });
+habitSet.forEach(h => {
+  const id = `habit_${h}`.replace(/\s+/g, '_');
+  const label = document.createElement("label");
+  label.setAttribute("for", id);
+  label.innerHTML = `<input type="checkbox" id="${id}" name="habit" value="${h}"> ${h}`;
+  habitContainer.appendChild(label);
+});
 
-  viceSet.forEach(v => {
-    const id = `vice_${v}`.replace(/\s+/g, '_');
-    const label = document.createElement("label");
-    label.setAttribute("for", id);
-    label.innerHTML = `<input type="checkbox" id="${id}" name="vice" value="${v}" checked> ${v}`;
-    viceContainer.appendChild(label);
-  });
-}
+viceSet.forEach(v => {
+  const id = `vice_${v}`.replace(/\s+/g, '_');
+  const label = document.createElement("label");
+  label.setAttribute("for", id);
+  label.innerHTML = `<input type="checkbox" id="${id}" name="vice" value="${v}"> ${v}`;
+  viceContainer.appendChild(label);
+});
 
 function renderChart() {
   const ctx = document.getElementById("trendChart").getContext("2d");
