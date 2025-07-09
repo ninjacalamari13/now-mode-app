@@ -1,29 +1,45 @@
-const sheetURL = "https://script.google.com/macros/s/AKfycbyrXlbeWtMDNIgbw3JbiTp07VkZ7jIqsey-WNTGgRwRvHIGsE8i4lQ2oyJR5SoyLsk/exec";
+// app.js (Firebase-integrated version)
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, getDocs, addDoc, query, orderBy } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
+  authDomain: "now-mode-app.firebaseapp.com",
+  projectId: "now-mode-app",
+  storageBucket: "now-mode-app.appspot.com",
+  messagingSenderId: "1052464330929",
+  appId: "1:1052464330929:web:fa731c39d32ede1951ca90",
+  measurementId: "G-J3D33XKS78"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 let logs = [], habitSet = new Set(), viceSet = new Set();
 
-function parseSheet(rows) {
-  return rows.map(r => {
-    let [date, sleep, mood, focus, energy, habits, vices, notes] = r;
-    let d = new Date(date);
-    let h = (habits || "").split(",").map(s => s.trim()).filter(Boolean);
-    let v = (vices || "").split(",").map(s => s.trim()).filter(Boolean);
+function parseEntries(snapshot) {
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    let h = (data.habits || []);
+    let v = (data.vices || []);
     h.forEach(x => habitSet.add(x));
     v.forEach(x => viceSet.add(x));
     return {
-      date: d,
-      dateLabel: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      sleep: +sleep,
-      mood: +mood,
-      focus: +focus,
-      energy: +energy,
+      date: data.date,
+      sleep: +data.sleep,
+      mood: +data.mood,
+      focus: +data.focus,
+      energy: +data.energy,
       habits: h,
       vices: v,
-      notes: notes || ""
+      notes: data.notes || ""
     };
-  }).sort((a, b) => a.date - b.date);
+  });
 }
 
 function render() {
+  if (!logs.length) return;
+
   const habitContainer = document.getElementById("habitCheckboxes");
   const viceContainer = document.getElementById("viceCheckboxes");
   habitContainer.innerHTML = "";
@@ -44,71 +60,61 @@ function render() {
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
-  const labels = [...new Set(logs.map(x => x.dateLabel))]; // One per month
-  const groupByMonth = key =>
-    labels.map(label => {
-      const filtered = logs.filter(l => l.dateLabel === label);
-      return filtered.length
-        ? filtered.reduce((a, b) => a + b[key], 0) / filtered.length
-        : null;
-    });
+  const labels = logs.map(x => {
+    const [month, day, year] = new Date(x.date).toLocaleDateString().split("/");
+    return `${year}-${month}`;
+  });
 
   window.chartInstance = new Chart(ctx, {
-    type: 'line',
+    type: "line",
     data: {
       labels,
       datasets: [
         {
-          label: 'Focus',
-          data: groupByMonth("focus"),
-          backgroundColor: 'rgba(255,255,255,0.1)',
-          borderColor: 'white',
+          label: "Focus",
+          data: logs.map(x => x.focus),
+          borderColor: "white",
+          backgroundColor: "rgba(255,255,255,0.2)",
           fill: true,
-          tension: 0.4
+          tension: 0.3
         },
         {
-          label: 'Energy',
-          data: groupByMonth("energy"),
-          backgroundColor: 'rgba(255,0,0,0.1)',
-          borderColor: 'red',
+          label: "Energy",
+          data: logs.map(x => x.energy),
+          borderColor: "red",
+          backgroundColor: "rgba(255,0,0,0.2)",
           fill: true,
-          tension: 0.4
+          tension: 0.3
         },
         {
-          label: 'Mood',
-          data: groupByMonth("mood"),
-          backgroundColor: 'rgba(255,255,0,0.1)',
-          borderColor: 'yellow',
+          label: "Mood",
+          data: logs.map(x => x.mood),
+          borderColor: "yellow",
+          backgroundColor: "rgba(255,255,0,0.2)",
           fill: true,
-          tension: 0.4
+          tension: 0.3
         },
         {
-          label: 'Sleep',
-          data: groupByMonth("sleep"),
-          backgroundColor: 'rgba(0,0,255,0.1)',
-          borderColor: 'blue',
+          label: "Sleep",
+          data: logs.map(x => x.sleep),
+          borderColor: "blue",
+          backgroundColor: "rgba(0,0,255,0.2)",
           fill: true,
-          tension: 0.4
+          tension: 0.3
         }
       ]
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: { labels: { color: "#eee" } }
-      },
+      plugins: { legend: { labels: { color: "#eee" } } },
       scales: {
         x: {
-          ticks: {
-            color: "#eee",
-            autoSkip: false,
-            maxRotation: 0,
-            minRotation: 0
-          }
+          type: 'category',
+          ticks: { color: "#eee", maxTicksLimit: 12 },
         },
         y: {
           beginAtZero: true,
-          suggestedMax: 10,
+          max: 12,
           ticks: { color: "#eee" }
         }
       }
@@ -116,28 +122,27 @@ function render() {
   });
 }
 
-// Fetch data
-fetch(sheetURL)
-  .then(r => r.json())
-  .then(data => {
-    logs = parseSheet(data);
-    render();
-  })
-  .catch(e => console.error("Fetch failed:", e));
+async function fetchEntries() {
+  const q = query(collection(db, "entries"), orderBy("date"));
+  const snapshot = await getDocs(q);
+  logs = parseEntries(snapshot);
+  render();
+}
 
-// Submit form
-document.getElementById("logForm").addEventListener("submit", e => {
+fetchEntries();
+
+document.getElementById("logForm").addEventListener("submit", async e => {
   e.preventDefault();
 
   const entry = {
-    date: new Date().toLocaleDateString(),
+    date: new Date().toISOString().split("T")[0],
     sleep: +sleep.value,
     mood: +mood.value,
     focus: +focus.value,
     energy: +energy.value,
     habits: [...document.querySelectorAll('input[name="habit"]:checked')].map(x => x.value),
     vices: [...document.querySelectorAll('input[name="vice"]:checked')].map(x => x.value),
-    notes: notes.value
+    notes: notes.value || ""
   };
 
   if (isNaN(entry.sleep) || isNaN(entry.mood) || isNaN(entry.focus) || isNaN(entry.energy)) {
@@ -145,13 +150,7 @@ document.getElementById("logForm").addEventListener("submit", e => {
     return;
   }
 
-  fetch(sheetURL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(entry)
-  });
-
-  logs.push({ ...entry, date: new Date(), dateLabel: new Date().toISOString().slice(0, 7), habits: entry.habits, vices: entry.vices });
+  await addDoc(collection(db, "entries"), entry);
+  logs.push(entry);
   render();
 });
