@@ -28,6 +28,11 @@
     input[type=range] {
       width: 100%;
     }
+    .range-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
     .checkbox-group {
       display: flex;
       flex-wrap: wrap;
@@ -60,10 +65,29 @@
   <h1>Now Mode Habit Logger</h1>
 
   <form id="logForm">
-    <label>Sleep: <input type="range" id="sleep" min="0" max="12" step="0.5" /></label>
-    <label>Mood: <input type="range" id="mood" min="0" max="10" step="1" /></label>
-    <label>Focus: <input type="range" id="focus" min="0" max="10" step="1" /></label>
-    <label>Energy: <input type="range" id="energy" min="0" max="10" step="1" /></label>
+    <div class="range-label">
+      <label for="sleep">Sleep:</label>
+      <span id="sleepVal">6</span>
+    </div>
+    <input type="range" id="sleep" min="0" max="12" step="0.5" value="6" oninput="sleepVal.innerText = this.value" />
+
+    <div class="range-label">
+      <label for="mood">Mood:</label>
+      <span id="moodVal">5</span>
+    </div>
+    <input type="range" id="mood" min="0" max="10" step="1" value="5" oninput="moodVal.innerText = this.value" />
+
+    <div class="range-label">
+      <label for="focus">Focus:</label>
+      <span id="focusVal">5</span>
+    </div>
+    <input type="range" id="focus" min="0" max="10" step="1" value="5" oninput="focusVal.innerText = this.value" />
+
+    <div class="range-label">
+      <label for="energy">Energy:</label>
+      <span id="energyVal">5</span>
+    </div>
+    <input type="range" id="energy" min="0" max="10" step="1" value="5" oninput="energyVal.innerText = this.value" />
 
     <div><strong>Habits:</strong></div>
     <div id="habitCheckboxes" class="checkbox-group"></div>
@@ -92,5 +116,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
-
