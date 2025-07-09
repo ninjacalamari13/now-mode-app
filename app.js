@@ -18,15 +18,28 @@ function parseDate(rawDate) {
   if (rawDate instanceof firebase.firestore.Timestamp) {
     return rawDate.toDate();
   }
+
+  if (typeof rawDate === "string" && rawDate.includes("/")) {
+    const [month, day, year] = rawDate.split("/").map(part => parseInt(part, 10));
+    return new Date(year, month - 1, day);
+  }
+
   const parsed = new Date(rawDate);
   return isNaN(parsed) ? new Date() : parsed;
 }
 
+
 function parseEntries(snapshot) {
   return snapshot.docs.map(doc => {
     const data = doc.data();
-    let h = Array.isArray(data.habits) ? data.habits : [];
-    let v = Array.isArray(data.vices) ? data.vices : [];
+let h = Array.isArray(data.habits)
+  ? data.habits
+  : (typeof data.habits === "string" ? data.habits.split(",").map(x => x.trim()) : []);
+
+let v = Array.isArray(data.vices)
+  ? data.vices
+  : (typeof data.vices === "string" ? data.vices.split(",").map(x => x.trim()) : []);
+
     h.forEach(x => habitSet.add(x));
     v.forEach(x => viceSet.add(x));
     return {
