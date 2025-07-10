@@ -52,13 +52,17 @@ input#sleep::-moz-range-track {
   background: linear-gradient(to right, #36A2EB 0%, #36A2EB var(--val, 50%), #444 var(--val, 50%));
 }
 
-/* Energy: Orange */
+/* ✅ Energy: Red (UPDATED) */
 input#energy::-webkit-slider-runnable-track {
-  background: linear-gradient(to right, #FFA500 0%, #FFA500 var(--val, 50%), #444 var(--val, 50%));
+  background: linear-gradient(to right, red 0%, red var(--val, 50%), #444 var(--val, 50%));
 }
 input#energy::-moz-range-track {
-  background: linear-gradient(to right, #FFA500 0%, #FFA500 var(--val, 50%), #444 var(--val, 50%));
+  background: linear-gradient(to right, red 0%, red var(--val, 50%), #444 var(--val, 50%));
 }
+input#energy::-moz-range-thumb {
+  background: red;
+}
+
 
 /* Base track styling */
 input[type=range]::-webkit-slider-runnable-track,
