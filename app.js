@@ -98,7 +98,10 @@ function renderChart() {
           borderColor: "white",
           backgroundColor: "rgba(255,255,255,0.2)",
           fill: true,
-          tension: 0.3
+          tension: 0.5
+          pointRadius: 0,
+          pointHoverRadius: 0,
+           pointStyle: false
         },
 {
   label: "Energy",
@@ -108,6 +111,9 @@ function renderChart() {
   fill: true,
   tension: 0.5, // 🔁 increased for smoother curve
   pointRadius: 0 // 🧽 removed dots from the chart
+  pointHoverRadius: 0,
+  pointStyle: false
+
 },
 
         {
@@ -116,7 +122,10 @@ function renderChart() {
           borderColor: "yellow",
           backgroundColor: "rgba(255,255,0,0.2)",
           fill: true,
-          tension: 0.3
+          tension: 0.5,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          pointStyle: false
         },
         {
           label: "Sleep",
@@ -124,7 +133,10 @@ function renderChart() {
           borderColor: "blue",
           backgroundColor: "rgba(0,0,255,0.2)",
           fill: true,
-          tension: 0.3
+          tension: 0.5,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          pointStyle: false
         }
       ]
     },
