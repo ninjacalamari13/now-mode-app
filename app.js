@@ -100,14 +100,16 @@ function renderChart() {
           fill: true,
           tension: 0.3
         },
-        {
-          label: "Energy",
-          data: filteredLogs.map(x => x.energy),
-          borderColor: "red",
-          backgroundColor: "rgba(255,0,0,0.2)",
-          fill: true,
-          tension: 0.3
-        },
+{
+  label: "Energy",
+  data: filteredLogs.map(x => x.energy),
+  borderColor: "red", // 🔴 changed from orange to red
+  backgroundColor: "rgba(255,0,0,0.2)", // 🔴 changed from orange tint to red tint
+  fill: true,
+  tension: 0.5, // 🔁 increased for smoother curve
+  pointRadius: 0 // 🧽 removed dots from the chart
+},
+
         {
           label: "Mood",
           data: filteredLogs.map(x => x.mood),
