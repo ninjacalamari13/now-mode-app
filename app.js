@@ -65,7 +65,7 @@ function renderCheckboxes() {
     const id = `habit_${h}`.replace(/\s+/g, '_');
     const label = document.createElement("label");
     label.setAttribute("for", id);
-    label.innerHTML = `<input type="checkbox" id="${id}" name="habit" value="${h}"> ${h}`;
+    label.innerHTML = `<input type="checkbox" id="${id}" name="habit" value="${h}" checked> ${h}`;
     habitContainer.appendChild(label);
   });
 
@@ -73,15 +73,12 @@ function renderCheckboxes() {
     const id = `vice_${v}`.replace(/\s+/g, '_');
     const label = document.createElement("label");
     label.setAttribute("for", id);
-    label.innerHTML = `<input type="checkbox" id="${id}" name="vice" value="${v}"> ${v}`;
+    label.innerHTML = `<input type="checkbox" id="${id}" name="vice" value="${v}" checked> ${v}`;
     viceContainer.appendChild(label);
   });
 }
 
-// ✅ Move this OUTSIDE of renderCheckboxes()
 function renderChart() {
-  filteredLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
-  
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
@@ -98,34 +95,23 @@ function renderChart() {
           borderColor: "white",
           backgroundColor: "rgba(255,255,255,0.2)",
           fill: true,
-          tension: 0.5
-          pointRadius: 0,
-          pointHoverRadius: 0,
-           pointStyle: false
+          tension: 0.3
         },
-{
-  label: "Energy",
-  data: filteredLogs.map(x => x.energy),
-  borderColor: "red", // 🔴 changed from orange to red
-  backgroundColor: "rgba(255,0,0,0.2)", // 🔴 changed from orange tint to red tint
-  fill: true,
-  tension: 0.5, // 🔁 increased for smoother curve
-  pointRadius: 0 // 🧽 removed dots from the chart
-  pointHoverRadius: 0,
-  pointStyle: false
-
-},
-
+        {
+          label: "Energy",
+          data: filteredLogs.map(x => x.energy),
+          borderColor: "red",
+          backgroundColor: "rgba(255,0,0,0.2)",
+          fill: true,
+          tension: 0.3
+        },
         {
           label: "Mood",
           data: filteredLogs.map(x => x.mood),
           borderColor: "yellow",
           backgroundColor: "rgba(255,255,0,0.2)",
           fill: true,
-          tension: 0.5,
-          pointRadius: 0,
-          pointHoverRadius: 0,
-          pointStyle: false
+          tension: 0.3
         },
         {
           label: "Sleep",
@@ -133,10 +119,7 @@ function renderChart() {
           borderColor: "blue",
           backgroundColor: "rgba(0,0,255,0.2)",
           fill: true,
-          tension: 0.5,
-          pointRadius: 0,
-          pointHoverRadius: 0,
-          pointStyle: false
+          tension: 0.3
         }
       ]
     },

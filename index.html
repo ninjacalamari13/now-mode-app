@@ -28,48 +28,19 @@
     }
     input[type=range] {
       width: 100%;
-    }    /* Mood: Yellow (#FFCE56) */
-input#mood::-webkit-slider-runnable-track {
-  background: linear-gradient(to right, #FFCE56 0%, #FFCE56 var(--val, 50%), #444 var(--val, 50%));
-}
-input#mood::-moz-range-track {
-  background: linear-gradient(to right, #FFCE56 0%, #FFCE56 var(--val, 50%), #444 var(--val, 50%));
-}
-
-/* Focus: White */
-input#focus::-webkit-slider-runnable-track {
-  background: linear-gradient(to right, #fff 0%, #fff var(--val, 50%), #444 var(--val, 50%));
-}
-input#focus::-moz-range-track {
-  background: linear-gradient(to right, #fff 0%, #fff var(--val, 50%), #444 var(--val, 50%));
-}
-
-/* Sleep: Blue */
-input#sleep::-webkit-slider-runnable-track {
-  background: linear-gradient(to right, #36A2EB 0%, #36A2EB var(--val, 50%), #444 var(--val, 50%));
-}
-input#sleep::-moz-range-track {
-  background: linear-gradient(to right, #36A2EB 0%, #36A2EB var(--val, 50%), #444 var(--val, 50%));
-}
-
-/* ✅ Energy: Red (UPDATED) */
-input#energy::-webkit-slider-runnable-track {
-  background: linear-gradient(to right, red 0%, red var(--val, 50%), #444 var(--val, 50%));
-}
-input#energy::-moz-range-track {
-  background: linear-gradient(to right, red 0%, red var(--val, 50%), #444 var(--val, 50%));
-}
-input#energy::-moz-range-thumb {
-  background: red;
-}
-
-
-/* Base track styling */
-input[type=range]::-webkit-slider-runnable-track,
-input[type=range]::-moz-range-track {
-  height: 8px;
-  border-radius: 5px;
-}
+    }
+    input#mood::-webkit-slider-thumb {
+      background: rgba(255, 99, 132, 1);
+    }
+    input#focus::-webkit-slider-thumb {
+      background: rgba(54, 162, 235, 1);
+    }
+    input#energy::-webkit-slider-thumb {
+      background: rgba(255, 206, 86, 1);
+    }
+    input#sleep::-webkit-slider-thumb {
+      background: rgba(153, 102, 255, 1);
+    }
     input#mood::-moz-range-thumb {
       background: rgba(255, 99, 132, 1);
     }
@@ -113,16 +84,6 @@ input[type=range]::-moz-range-track {
     .graph-controls button:hover {
       background: #444;
     }
-    /* Round slider ends */
-input[type=range]::-webkit-slider-runnable-track,
-input[type=range]::-moz-range-track {
-  border-radius: 999px;
-}
-
-/* Make checkboxes white */
-input[type=checkbox] {
-  accent-color: white;
-}
   </style>
 </head>
 <body>
@@ -182,17 +143,6 @@ input[type=checkbox] {
     navigator.serviceWorker.register('service-worker.js');
   }
 </script>
-  <script>
-  document.querySelectorAll('input[type="range"]').forEach(slider => {
-    const update = () => {
-      const value = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
-      slider.style.setProperty('--val', value + '%');
-    };
-    slider.addEventListener('input', update);
-    update();
-  });
-</script>
-
 
 </body>
 </html>
