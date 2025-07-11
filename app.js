@@ -130,7 +130,18 @@ function renderChart() {
       scales: {
         x: {
           type: 'category',
-          ticks: { color: "#eee" },
+          ticks: {
+  color: "#eee",
+  callback: function(value, index, ticks) {
+    const current = filteredLogs[index]?.date;
+    const prev = filteredLogs[index - 1]?.date;
+    if (!current) return '';
+    if (!prev || current.getMonth() !== prev.getMonth() || current.getFullYear() !== prev.getFullYear()) {
+      return `${current.getMonth() + 1}-${current.getFullYear()}`; // MM-YYYY
+    }
+    return '';
+  }
+}
         },
         y: {
           beginAtZero: true,
