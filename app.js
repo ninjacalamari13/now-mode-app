@@ -79,6 +79,7 @@ function renderCheckboxes() {
 }
 
 function renderChart() {
+  filteredLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
