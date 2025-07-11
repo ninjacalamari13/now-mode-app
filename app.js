@@ -130,18 +130,23 @@ function renderChart() {
       scales: {
         x: {
           type: 'category',
-          ticks: {
+ticks: {
   color: "#eee",
-  callback: function(value, index, ticks) {
-    const current = filteredLogs[index]?.date;
-    const prev = filteredLogs[index - 1]?.date;
-    if (!current) return '';
-    if (!prev || current.getMonth() !== prev.getMonth() || current.getFullYear() !== prev.getFullYear()) {
-      return `${current.getMonth() + 1}-${current.getFullYear()}`; // MM-YYYY
+  callback: function(value, index, values) {
+    const date = new Date(value);
+    const prevDate = index > 0 ? new Date(values[index - 1].value) : null;
+
+    if (
+      !prevDate ||
+      date.getMonth() !== prevDate.getMonth() ||
+      date.getFullYear() !== prevDate.getFullYear()
+    ) {
+      return `${date.getMonth() + 1}-${date.getFullYear()}`; // MM-YYYY
     }
     return '';
   }
 }
+
         },
         y: {
           beginAtZero: true,
