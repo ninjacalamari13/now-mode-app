@@ -83,7 +83,7 @@ function renderChart() {
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
-  const labels = filteredLogs.map(x => x.date); // use real Date objects
+  const labels = filteredLogs.map(x => x.date.toISOString().split("T")[0]);
 
   window.chartInstance = new Chart(ctx, {
     type: "line",
@@ -129,17 +129,24 @@ function renderChart() {
       plugins: { legend: { labels: { color: "#eee" } } },
       scales: {
         x: {
-          type: 'time',
-          time: {
-            unit: 'month',
-            tooltipFormat: 'MMM yyyy',
-            displayFormats: {
-              month: 'MMM yyyy'  // ➤ 'Jul 2025'
-            }
-          },
-          ticks: {
-            color: "#eee"
-          }
+          type: 'category',
+ticks: {
+  color: "#eee",
+  callback: function(value, index, values) {
+    const date = new Date(value);
+    const prevDate = index > 0 ? new Date(values[index - 1].value) : null;
+
+    if (
+      !prevDate ||
+      date.getMonth() !== prevDate.getMonth() ||
+      date.getFullYear() !== prevDate.getFullYear()
+    ) {
+      return `${date.getMonth() + 1}-${date.getFullYear()}`; // MM-YYYY
+    }
+    return '';
+  }
+}
+
         },
         y: {
           beginAtZero: true,
@@ -195,4 +202,3 @@ document.getElementById("logForm").addEventListener("submit", async e => {
   filteredLogs = logs;
   renderChart();
 });
-
