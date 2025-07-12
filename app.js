@@ -1,4 +1,4 @@
-// app.js
+// app-2.js
 const firebaseConfig = {
   apiKey: "AIzaSyCW7haDiGehyi-FWTynCi2aHSks0JEleYQ",
   authDomain: "now-mode-app.firebaseapp.com",
@@ -25,8 +25,75 @@ function parseDate(rawDate) {
   }
 
   const parsed = new Date(rawDate);
-  return isNaN(parsed) ? new Date() : parsed;
+  return isNaN(parsed.getTime()) ? new Date(0) : parsed;
 }
+
+function formatDateLabel(date) {
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${month}-${year}`;
+}
+
+function prepareChartData(data) {
+  const sorted = [...data].sort((a, b) => a.date - b.date);
+  return {
+    labels: sorted.map(entry => formatDateLabel(entry.date)),
+    datasets: [
+      {
+        label: 'Mood',
+        data: sorted.map(entry => entry.mood),
+        borderColor: 'yellow',
+        fill: false,
+        tension: 0.4,
+        pointRadius: 0
+      }
+    ]
+  };
+}
+
+db.collection("entries").get().then(snapshot => {
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const date = parseDate(data.Timestamp);
+    const mood = parseFloat(data['Gratitude (mood)']);
+    logs.push({ date, mood });
+  });
+
+  const chartData = prepareChartData(logs);
+
+  const ctx = document.getElementById('myChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: chartData,
+    options: {
+      scales: {
+        x: {
+          ticks: {
+            callback: function(value, index, values) {
+              // Only show one label per month
+              if (index === 0 || formatDateLabel(logs[index].date) !== formatDateLabel(logs[index - 1].date)) {
+                return formatDateLabel(logs[index].date);
+              }
+              return '';
+            },
+            color: '#eee'
+          },
+          grid: { color: '#333' }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#eee' },
+          grid: { color: '#333' }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: { color: '#eee' }
+        }
+      }
+    }
+  });
+});
 
 
 function parseEntries(snapshot) {
