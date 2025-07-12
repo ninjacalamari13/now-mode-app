@@ -19,14 +19,28 @@ function parseDate(rawDate) {
     return rawDate.toDate();
   }
 
-  if (typeof rawDate === "string" && rawDate.includes("/")) {
-    const [month, day, year] = rawDate.split("/").map(part => parseInt(part, 10));
-    return new Date(year, month - 1, day);
+  if (typeof rawDate === "string") {
+    // Handle YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+      const [year, month, day] = rawDate.split("-").map(part => parseInt(part, 10));
+      return new Date(year, month - 1, day);
+    }
+
+    // Handle Month Day format (e.g., "July 9")
+    const monthDayMatch = rawDate.match(/^(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})$/i);
+    if (monthDayMatch) {
+      const [_, monthName, dayStr] = monthDayMatch;
+      const year = new Date().getFullYear();
+      const dateStr = `${monthName} ${parseInt(dayStr)}, ${year}`;
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
   }
 
   const parsed = new Date(rawDate);
-  return isNaN(parsed) ? new Date() : parsed;
+  return isNaN(parsed.getTime()) ? new Date(0) : parsed;
 }
+
 
 
 function parseEntries(snapshot) {
