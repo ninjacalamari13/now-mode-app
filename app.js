@@ -19,8 +19,8 @@ function parseDate(rawDate) {
     return rawDate.toDate();
   }
 
-  if (typeof rawDate === "string" && rawDate.includes("/")) {
-    const [month, day, year] = rawDate.split("/").map(part => parseInt(part, 10));
+  if (typeof rawDate === "string" && rawDate.includes("-")) {
+    const [year, month, day] = rawDate.split("-").map(part => parseInt(part, 10));
     return new Date(year, month - 1, day);
   }
 
@@ -29,9 +29,10 @@ function parseDate(rawDate) {
 }
 
 function formatDateLabel(date) {
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const year = date.getFullYear();
-  return `${month}-${year}`;
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function prepareChartData(data) {
@@ -50,6 +51,50 @@ function prepareChartData(data) {
     ]
   };
 }
+
+db.collection("entries").get().then(snapshot => {
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const date = parseDate(data.Timestamp);
+    const mood = parseFloat(data['Gratitude (mood)']);
+    logs.push({ date, mood });
+  });
+
+  const chartData = prepareChartData(logs);
+
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: chartData,
+    options: {
+      scales: {
+        x: {
+          ticks: {
+            callback: function(value, index, values) {
+              if (index === 0 || formatDateLabel(logs[index].date) !== formatDateLabel(logs[index - 1].date)) {
+                return formatDateLabel(logs[index].date);
+              }
+              return '';
+            },
+            color: '#eee'
+          },
+          grid: { color: '#333' }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#eee' },
+          grid: { color: '#333' }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: { color: '#eee' }
+        }
+      }
+    }
+  });
+});
+
 
 db.collection("entries").get().then(snapshot => {
   snapshot.forEach(doc => {
