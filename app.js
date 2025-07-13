@@ -200,8 +200,14 @@ fetchEntries();
 document.getElementById("logForm").addEventListener("submit", async e => {
   e.preventDefault();
 
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const formattedDate = `${yyyy}-${mm}-${dd}`;
+
   const entry = {
-    date: new Date(),
+    date: formattedDate,
     sleep: +document.getElementById("sleep").value,
     mood: +document.getElementById("mood").value,
     focus: +document.getElementById("focus").value,
