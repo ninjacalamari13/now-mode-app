@@ -41,7 +41,12 @@ function parseDate(rawDate) {
   return isNaN(parsed.getTime()) ? new Date(0) : parsed;
 }
 
-
+function formatDateLabel(date) {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 
 function parseEntries(snapshot) {
   return snapshot.docs.map(doc => {
@@ -69,6 +74,12 @@ let v = Array.isArray(data.vices)
   });
 }
 
+function uncheckAllHabitBoxes() {
+  setTimeout(() => {
+    document.querySelectorAll('input[name="habit"], input[name="vice"]').forEach(cb => cb.checked = false);
+  }, 100); // slight delay allows DOM to populate checkboxes
+}
+
 function renderCheckboxes() {
   const habitContainer = document.getElementById("habitCheckboxes");
   const viceContainer = document.getElementById("viceCheckboxes");
@@ -79,7 +90,7 @@ function renderCheckboxes() {
     const id = `habit_${h}`.replace(/\s+/g, '_');
     const label = document.createElement("label");
     label.setAttribute("for", id);
-    label.innerHTML = `<input type="checkbox" id="${id}" name="habit" value="${h}" checked> ${h}`;
+    label.innerHTML = `<input type="checkbox" id="${id}" name="habit" value="${h}"> ${h}`;
     habitContainer.appendChild(label);
   });
 
@@ -87,26 +98,39 @@ function renderCheckboxes() {
     const id = `vice_${v}`.replace(/\s+/g, '_');
     const label = document.createElement("label");
     label.setAttribute("for", id);
-    label.innerHTML = `<input type="checkbox" id="${id}" name="vice" value="${v}" checked> ${v}`;
+    label.innerHTML = `<input type="checkbox" id="${id}" name="vice" value="${v}"> ${v}`;
     viceContainer.appendChild(label);
   });
 }
 
 function renderChart() {
-  filteredLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
-  const labels = filteredLogs.map(x => x.date.toISOString().split("T")[0]);
+  // Prepare x-axis labels in YYYY-MM-DD format
+  const labels = filteredLogs.map(x => x.date instanceof Date ? x.date.toISOString().split("T")[0] : x.date);
+
+  // Helper to generate habit bar datasets
+  const habitBar = (label, color) => ({
+    type: 'bar',
+    label,
+    data: filteredLogs.map(x => ({
+      x: x.date instanceof Date ? x.date.toISOString().split("T")[0] : x.date,
+      y: x.habits.includes(label) ? 12 : 0
+    })),
+    backgroundColor: color,
+    borderSkipped: false,
+    yAxisID: 'y',
+    order: 0
+  });
 
   window.chartInstance = new Chart(ctx, {
     type: "line",
     data: {
-      labels,
       datasets: [
         {
           label: "Focus",
-          data: filteredLogs.map(x => x.focus),
+          data: filteredLogs.map((x, i) => ({ x: labels[i], y: x.focus })),
           borderColor: "white",
           backgroundColor: "rgba(255,255,255,0.2)",
           fill: true,
@@ -114,7 +138,7 @@ function renderChart() {
         },
         {
           label: "Energy",
-          data: filteredLogs.map(x => x.energy),
+          data: filteredLogs.map((x, i) => ({ x: labels[i], y: x.energy })),
           borderColor: "red",
           backgroundColor: "rgba(255,0,0,0.2)",
           fill: true,
@@ -122,7 +146,7 @@ function renderChart() {
         },
         {
           label: "Mood",
-          data: filteredLogs.map(x => x.mood),
+          data: filteredLogs.map((x, i) => ({ x: labels[i], y: x.mood })),
           borderColor: "yellow",
           backgroundColor: "rgba(255,255,0,0.2)",
           fill: true,
@@ -130,12 +154,18 @@ function renderChart() {
         },
         {
           label: "Sleep",
-          data: filteredLogs.map(x => x.sleep),
+          data: filteredLogs.map((x, i) => ({ x: labels[i], y: x.sleep })),
           borderColor: "blue",
           backgroundColor: "rgba(0,0,255,0.2)",
           fill: true,
           tension: 0.3
-        }
+        },
+
+        // Habit bars
+        habitBar("Meditation", "rgba(0,255,0,0.3)"),
+        habitBar("Learning", "rgba(0,150,255,0.3)"),
+        habitBar("Reflection", "rgba(255,255,0,0.3)"),
+        habitBar("Movement", "rgba(255,105,180,0.3)")
       ]
     },
     options: {
@@ -144,23 +174,7 @@ function renderChart() {
       scales: {
         x: {
           type: 'category',
-ticks: {
-  color: "#eee",
-  callback: function(value, index, values) {
-    const date = new Date(value);
-    const prevDate = index > 0 ? new Date(values[index - 1].value) : null;
-
-    if (
-      !prevDate ||
-      date.getMonth() !== prevDate.getMonth() ||
-      date.getFullYear() !== prevDate.getFullYear()
-    ) {
-      return `${date.getMonth() + 1}-${date.getFullYear()}`; // MM-YYYY
-    }
-    return '';
-  }
-}
-
+          ticks: { color: "#eee" },
         },
         y: {
           beginAtZero: true,
@@ -171,6 +185,7 @@ ticks: {
     }
   });
 }
+
 
 function filterChart(range) {
   const now = new Date();
@@ -220,5 +235,9 @@ document.getElementById("logForm").addEventListener("submit", async e => {
   await db.collection("entries").add(entry);
   logs.push(entry);
   filteredLogs = logs;
+  uncheckAllHabitBoxes();
   renderChart();
+});
+window.addEventListener("load", () => {
+  uncheckAllHabitBoxes();
 });
