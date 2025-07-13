@@ -5,7 +5,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Now Mode</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js?v=2"></script>
+
+  <!-- Chart.js with time adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <link rel="icon" type="image/png" href="favicon.ico?v=2" />
   <style>
     body {
@@ -13,14 +18,22 @@
       color: #eee;
       font-family: sans-serif;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
     }
     canvas {
       max-width: 100%;
+      height: 500px; /* or try 600px */
       background: #222;
       border-radius: 10px;
     }
     form {
-      margin-bottom: 20px;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto 20px;
     }
     label {
       display: block;
@@ -55,22 +68,29 @@
     }
     .range-label {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+      text-align: center;
     }
     .checkbox-group {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
       gap: 10px;
       margin-bottom: 10px;
+      justify-items: center;
     }
     .checkbox-group label {
-      display: inline-flex;
+      display: flex;
+      justify-content: center;
       align-items: center;
       background: #222;
-      padding: 5px 10px;
+      padding: 10px;
       border-radius: 5px;
-    }
+      width: 100%;
+      max-width: 300px;
+    }   
     .graph-controls button {
       margin-right: 10px;
       margin-bottom: 10px;
@@ -87,7 +107,7 @@
   </style>
 </head>
 <body>
-  <canvas id="trendChart" height="150"></canvas>
+  <canvas id="trendChart" height="200"></canvas>
 
   <div class="graph-controls">
     <button onclick="filterChart('all')">View All</button>
@@ -101,33 +121,33 @@
 
   <form id="logForm">
     <div class="range-label">
-      <label for="sleep">Sleep:</label>
+      <label for="sleep">Sleep</label>
       <span id="sleepVal">6</span>
     </div>
     <input type="range" id="sleep" min="0" max="12" step="0.5" value="6" oninput="sleepVal.innerText = this.value" />
 
     <div class="range-label">
-      <label for="mood">Mood:</label>
+      <label for="mood">Mood</label>
       <span id="moodVal">5</span>
     </div>
     <input type="range" id="mood" min="0" max="10" step="1" value="5" oninput="moodVal.innerText = this.value" />
 
     <div class="range-label">
-      <label for="focus">Focus:</label>
+      <label for="focus">Focus</label>
       <span id="focusVal">5</span>
     </div>
     <input type="range" id="focus" min="0" max="10" step="1" value="5" oninput="focusVal.innerText = this.value" />
 
     <div class="range-label">
-      <label for="energy">Energy:</label>
+      <label for="energy">Energy</label>
       <span id="energyVal">5</span>
     </div>
     <input type="range" id="energy" min="0" max="10" step="1" value="5" oninput="energyVal.innerText = this.value" />
 
-    <div><strong>Habits:</strong></div>
+    <div><strong>Habits</strong></div>
     <div id="habitCheckboxes" class="checkbox-group"></div>
 
-    <div><strong>Vices:</strong></div>
+    <div><strong>Vices</strong></div>
     <div id="viceCheckboxes" class="checkbox-group"></div>
 
     <label>Notes:<br /><textarea id="notes" rows="3" style="width: 100%"></textarea></label>
@@ -143,6 +163,21 @@
     navigator.serviceWorker.register('service-worker.js');
   }
 </script>
+
+<script>
+// Call this function to uncheck all checkboxes (habits and vices)
+function resetCheckboxes() {
+  document.querySelectorAll('#habitCheckboxes input[type="checkbox"], #viceCheckboxes input[type="checkbox"]').forEach(cb => {
+    cb.checked = false;
+  });
+}
+
+// Optional: reset all checkboxes on page load
+window.onload = () => {
+  resetCheckboxes();
+};
+</script>
+
 
 </body>
 </html>
