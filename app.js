@@ -118,7 +118,7 @@ function renderChart() {
     stack: 'habitStack',
     yAxisID: 'yBars',
     order: 0,
-    barThickness: 5,
+    barThickness: 2,
     categoryPercentage: 1.0
   });
 
@@ -133,7 +133,7 @@ function renderChart() {
     stack: 'viceStack',
     yAxisID: 'yBars',
     order: 0,
-    barThickness: 5,
+    barThickness: 2,
     categoryPercentage: 1.0
   });
 
