@@ -107,79 +107,167 @@ function renderChart() {
   const ctx = document.getElementById("trendChart").getContext("2d");
   if (window.chartInstance) window.chartInstance.destroy();
 
-  // Prepare x-axis labels in YYYY-MM-DD format
-  const labels = filteredLogs.map(x => x.date instanceof Date ? x.date.toISOString().split("T")[0] : x.date);
-
-  // Helper to generate habit bar datasets
   const habitBar = (label, color) => ({
     type: 'bar',
     label,
     data: filteredLogs.map(x => ({
-      x: x.date instanceof Date ? x.date.toISOString().split("T")[0] : x.date,
-      y: x.habits.includes(label) ? 12 : 0
+      x: new Date(x.date),
+      y: x.habits.includes(label) ? 1.25 : 0
     })),
     backgroundColor: color,
-    borderSkipped: false,
-    yAxisID: 'y',
-    order: 0
+    stack: 'habitStack',
+    yAxisID: 'yBars',
+    order: 0,
+    barThickness: 5,
+    categoryPercentage: 1.0
   });
 
+  const viceBar = (label, color) => ({
+    type: 'bar',
+    label,
+    data: filteredLogs.map(x => ({
+      x: new Date(x.date),
+      y: x.vices.includes(label) ? -1.25 : 0
+    })),
+    backgroundColor: color,
+    stack: 'viceStack',
+    yAxisID: 'yBars',
+    order: 0,
+    barThickness: 5,
+    categoryPercentage: 1.0
+  });
+
+  const focusData = filteredLogs.map(x => ({ x: new Date(x.date), y: x.focus }));
+  const moodData = filteredLogs.map(x => ({ x: new Date(x.date), y: x.mood }));
+  const energyData = filteredLogs.map(x => ({ x: new Date(x.date), y: x.energy }));
+  const sleepData = filteredLogs.map(x => ({ x: new Date(x.date), y: x.sleep }));
+
+  const activeLineData = [focusData, moodData, energyData, sleepData].filter(dataset => dataset.some(d => d.y > 0));
+  const maxLineY = activeLineData.flat().reduce((max, point) => Math.max(max, point.y), 0);
+  const totalHabitHeight = 5;
+  const totalViceHeight = -5;
+  const yMax = Math.max(maxLineY, 12);
+  const yMin = totalViceHeight - 1;
+
   window.chartInstance = new Chart(ctx, {
-    type: "line",
+    // type is now defined per dataset, so remove this line or replace with neutral base
     data: {
       datasets: [
+        // Stacked Habit Bars
+        habitBar("Meditation", "rgba(0,150,255,0.5)"),
+        habitBar("Movement", "rgba(255,0,0,0.5)"),
+        habitBar("Reflection", "rgba(255,255,0,0.5)"),
+        habitBar("Learning", "rgba(0,255,0,0.5)"),
+
+        // Stacked Vice Bars
+        viceBar("Nic", "rgba(200,200,200,0.5)"),
+        viceBar("Alcohol", "rgba(0,200,200,0.5)"),
+        viceBar("Weed", "rgba(0,255,100,0.5)"),
+        viceBar("Wank", "rgba(255,100,100,0.5)"),
+
+        // Line datasets (not stacked)
         {
+          type: 'line',
           label: "Focus",
-          data: filteredLogs.map((x, i) => ({ x: labels[i], y: x.focus })),
+          data: focusData,
           borderColor: "white",
           backgroundColor: "rgba(255,255,255,0.2)",
           fill: true,
-          tension: 0.3
+          tension: 0.3,
+          yAxisID: 'y',
+          order: 4
         },
         {
-          label: "Energy",
-          data: filteredLogs.map((x, i) => ({ x: labels[i], y: x.energy })),
-          borderColor: "red",
-          backgroundColor: "rgba(255,0,0,0.2)",
-          fill: true,
-          tension: 0.3
-        },
-        {
+          type: 'line',
           label: "Mood",
-          data: filteredLogs.map((x, i) => ({ x: labels[i], y: x.mood })),
+          data: moodData,
           borderColor: "yellow",
           backgroundColor: "rgba(255,255,0,0.2)",
           fill: true,
-          tension: 0.3
+          tension: 0.3,
+          yAxisID: 'y',
+          order: 3
         },
         {
+          type: 'line',
+          label: "Energy",
+          data: energyData,
+          borderColor: "red",
+          backgroundColor: "rgba(255,0,0,0.2)",
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y',
+          order: 2
+        },
+        {
+          type: 'line',
           label: "Sleep",
-          data: filteredLogs.map((x, i) => ({ x: labels[i], y: x.sleep })),
+          data: sleepData,
           borderColor: "blue",
           backgroundColor: "rgba(0,0,255,0.2)",
           fill: true,
-          tension: 0.3
-        },
-
-        // Habit bars
-        habitBar("Meditation", "rgba(0,255,0,0.3)"),
-        habitBar("Learning", "rgba(0,150,255,0.3)"),
-        habitBar("Reflection", "rgba(255,255,0,0.3)"),
-        habitBar("Movement", "rgba(255,105,180,0.3)")
+          tension: 0.3,
+          yAxisID: 'y',
+          order: 1
+        }
       ]
     },
     options: {
       responsive: true,
-      plugins: { legend: { labels: { color: "#eee" } } },
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: "#eee" } },
+        annotation: {
+          annotations: {
+            divider: {
+              type: 'line',
+              yMin: 0,
+              yMax: 0,
+              borderColor: 'white',
+              borderWidth: 1,
+              borderDash: [5, 5],
+              label: { display: false }
+            }
+          }
+        }
+      },
       scales: {
         x: {
-          type: 'category',
-          ticks: { color: "#eee" },
+          type: 'time',
+          time: {
+            unit: 'day',
+            displayFormats: { day: 'yyyy-MM-dd' }
+          },
+          ticks: {
+            color: "#eee",
+            callback: function(value) {
+              const date = new Date(value);
+              const day = date.getDate();
+              if (day === 1 || day === 15) {
+                return date.toISOString().split("T")[0];
+              }
+              return '';
+            }
+          },
+          stacked: false
         },
         y: {
-          beginAtZero: true,
-          max: 12,
-          ticks: { color: "#eee" }
+          position: 'left',
+          stacked: false,
+          min: yMin,
+          max: yMax,
+          ticks: {
+            color: "#eee",
+            display: false
+          }
+        },
+        yBars: {
+          position: 'left',
+          stacked: true,
+          min: yMin,
+          max: yMax,
+          display: false,
+          grid: { drawOnChartArea: false }
         }
       }
     }
